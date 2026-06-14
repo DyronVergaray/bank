@@ -43,15 +43,27 @@ public class VerificacionCodigoView extends JFrame {
     // Dependencias MVC
     private final AutenticacionController controller;
     private final InicioSesion.CanalVerificacion canal;
+    private final boolean modoRecuperacion;
 
     // --------------------------------------------------------
-    // Constructor
+    // Constructor (flujo normal de login)
     // --------------------------------------------------------
     public VerificacionCodigoView(AutenticacionController controller,
                                    InicioSesion.CanalVerificacion canal,
                                    String codigoSimulado) {
-        this.controller = controller;
-        this.canal      = canal;
+        this(controller, canal, codigoSimulado, false);
+    }
+
+    // --------------------------------------------------------
+    // Constructor con modo (login o recuperación de contraseña)
+    // --------------------------------------------------------
+    public VerificacionCodigoView(AutenticacionController controller,
+                                   InicioSesion.CanalVerificacion canal,
+                                   String codigoSimulado,
+                                   boolean modoRecuperacion) {
+        this.controller       = controller;
+        this.canal            = canal;
+        this.modoRecuperacion = modoRecuperacion;
         initUI(codigoSimulado);
     }
 
@@ -121,10 +133,17 @@ public class VerificacionCodigoView extends JFrame {
 
         barra.add(Box.createVerticalGlue());
 
-        // Pasos visuales del flujo
-        JLabel lblPaso1 = etiquetaPaso("✅  Credenciales validadas");
+        // Pasos visuales del flujo (texto distinto según el modo)
+        String paso1Texto = modoRecuperacion
+                ? "✅  Datos verificados"
+                : "✅  Credenciales validadas";
+        String paso3Texto = modoRecuperacion
+                ? "○  Nueva contraseña"
+                : "○  Acceso al sistema";
+
+        JLabel lblPaso1 = etiquetaPaso(paso1Texto);
         JLabel lblPaso2 = etiquetaPaso("▶  Ingresar código");
-        JLabel lblPaso3 = etiquetaPasoGris("○  Acceso al sistema");
+        JLabel lblPaso3 = etiquetaPasoGris(paso3Texto);
         barra.add(lblPaso1);
         barra.add(Box.createRigidArea(new Dimension(0, 8)));
         barra.add(lblPaso2);
@@ -268,7 +287,11 @@ public class VerificacionCodigoView extends JFrame {
         btnVolver.setFocusPainted(false);
         btnVolver.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnVolver.addActionListener(e -> {
-            new LoginView().setVisible(true);
+            if (modoRecuperacion) {
+                new RecuperarPasswordView().setVisible(true);
+            } else {
+                new LoginView().setVisible(true);
+            }
             this.dispose();
         });
         gbc.gridy  = 8;
@@ -301,9 +324,14 @@ public class VerificacionCodigoView extends JFrame {
             return;
         }
 
-        // Autenticación exitosa → abrir pantalla de bienvenida
-        BienvenidaView ventanaBienvenida = new BienvenidaView(controller);
-        ventanaBienvenida.setVisible(true);
+        // Verificación exitosa → según el modo, ir a Bienvenida o Nueva Contraseña
+        if (modoRecuperacion) {
+            NuevaPasswordView ventanaNueva = new NuevaPasswordView(controller);
+            ventanaNueva.setVisible(true);
+        } else {
+            BienvenidaView ventanaBienvenida = new BienvenidaView(controller);
+            ventanaBienvenida.setVisible(true);
+        }
         this.dispose();
     }
 

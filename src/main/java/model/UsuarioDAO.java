@@ -218,4 +218,48 @@ public class UsuarioDAO {
         }
         return -99;
     }
+
+    // --------------------------------------------------------
+    // sp_ValidarDatosRecuperacion   (Recuperación de contraseña)
+    // Retorna el Usuario si email + primer_nombre + apellido_paterno
+    // + telefono coinciden con un usuario activo, o null si no.
+    // --------------------------------------------------------
+    public Usuario validarDatosRecuperacion(String email, String primerNombre,
+                                            String apellidoPaterno, String telefono) {
+        Usuario usuario = null;
+        String sql = "{CALL sp_ValidarDatosRecuperacion(?, ?, ?, ?)}";
+
+        try (CallableStatement cs = getConexion().prepareCall(sql)) {
+            cs.setString(1, email);
+            cs.setString(2, primerNombre);
+            cs.setString(3, apellidoPaterno);
+            cs.setString(4, telefono);
+            try (ResultSet rs = cs.executeQuery()) {
+                if (rs.next()) usuario = mapearUsuario(rs);
+            }
+        } catch (SQLException e) {
+            System.err.println("[UsuarioDAO] Error en validarDatosRecuperacion: " + e.getMessage());
+        }
+        return usuario;
+    }
+
+    // --------------------------------------------------------
+    // sp_ActualizarPassword   (Recuperación de contraseña)
+    // Retorna true si se actualizó el hash correctamente.
+    // --------------------------------------------------------
+    public boolean actualizarPassword(int idUsuario, String nuevoPasswordHash) {
+        boolean ok = false;
+        String sql = "{CALL sp_ActualizarPassword(?, ?)}";
+
+        try (CallableStatement cs = getConexion().prepareCall(sql)) {
+            cs.setInt(1, idUsuario);
+            cs.setString(2, nuevoPasswordHash);
+            try (ResultSet rs = cs.executeQuery()) {
+                if (rs.next()) ok = rs.getInt("actualizados") > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("[UsuarioDAO] Error en actualizarPassword: " + e.getMessage());
+        }
+        return ok;
+    }
 }

@@ -60,7 +60,7 @@ public class LoginView extends JFrame {
     private void initUI() {
         setTitle("Qori Bank — Iniciar Sesión");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 580);
+        setSize(900, 620);
         setLocationRelativeTo(null);
         setResizable(false);
 
@@ -142,7 +142,7 @@ public class LoginView extends JFrame {
         };
         card.setLayout(new GridBagLayout());
         card.setOpaque(false);
-        card.setPreferredSize(new Dimension(420, 500));
+        card.setPreferredSize(new Dimension(420, 540));
         card.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -216,13 +216,26 @@ public class LoginView extends JFrame {
         btnIngresar = crearBotonPrincipal("Ingresar");
         btnIngresar.addActionListener(e -> procesarLogin());
         gbc.gridy  = 9;
-        gbc.insets = new Insets(4, 0, 8, 0);
+        gbc.insets = new Insets(4, 0, 4, 0);
         card.add(btnIngresar, gbc);
+
+        // Link ¿Olvidaste tu contraseña?
+        JButton btnOlvido = new JButton("¿Olvidaste tu contraseña?");
+        btnOlvido.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        btnOlvido.setForeground(DORADO_OSCURO);
+        btnOlvido.setBorderPainted(false);
+        btnOlvido.setContentAreaFilled(false);
+        btnOlvido.setFocusPainted(false);
+        btnOlvido.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnOlvido.addActionListener(e -> abrirRecuperacion());
+        gbc.gridy  = 10;
+        gbc.insets = new Insets(0, 0, 8, 0);
+        card.add(btnOlvido, gbc);
 
         // Separador visual
         JSeparator sep = new JSeparator();
         sep.setForeground(new Color(0xDDDDDD));
-        gbc.gridy  = 10;
+        gbc.gridy  = 11;
         gbc.insets = new Insets(4, 0, 8, 0);
         card.add(sep, gbc);
 
@@ -235,7 +248,7 @@ public class LoginView extends JFrame {
         btnCrearCuenta.setFocusPainted(false);
         btnCrearCuenta.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnCrearCuenta.addActionListener(e -> abrirRegistro());
-        gbc.gridy  = 11;
+        gbc.gridy  = 12;
         gbc.insets = new Insets(0, 0, 0, 0);
         card.add(btnCrearCuenta, gbc);
 
@@ -280,6 +293,14 @@ public class LoginView extends JFrame {
     // --------------------------------------------------------
     private void abrirRegistro() {
         new RegistroView().setVisible(true);
+        this.setVisible(false);
+    }
+
+    // --------------------------------------------------------
+    // Evento: ¿Olvidaste tu contraseña? → abre RecuperarPasswordView
+    // --------------------------------------------------------
+    private void abrirRecuperacion() {
+        new RecuperarPasswordView().setVisible(true);
         this.setVisible(false);
     }
 

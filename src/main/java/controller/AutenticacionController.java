@@ -227,6 +227,71 @@ public class AutenticacionController {
     }
 
     // ============================================================
+    // RECUPERACIÓN DE CONTRASEÑA
+    // ============================================================
+
+    /**
+     * PASO 1 de recuperación: valida que email + primer nombre +
+     * apellido paterno + teléfono correspondan a un usuario activo.
+     * No requiere contraseña.
+     *
+     * Si es exitoso, guarda el usuario en usuarioActual (igual que
+     * validarCredenciales) para continuar con el flujo OTP.
+     *
+     * Retorna null si fue exitoso, o un mensaje de error.
+     */
+    public String validarDatosRecuperacion(String email, String primerNombre,
+                                           String apellidoPaterno, String telefono) {
+
+        if (email == null || email.trim().isEmpty())
+            return "Ingrese su correo electrónico.";
+        if (!SeguridadUtil.emailValido(email.trim()))
+            return "El formato del correo no es válido.";
+        if (primerNombre == null || primerNombre.trim().isEmpty())
+            return "Ingrese su primer nombre.";
+        if (apellidoPaterno == null || apellidoPaterno.trim().isEmpty())
+            return "Ingrese su apellido paterno.";
+        if (telefono == null || telefono.trim().isEmpty())
+            return "Ingrese su número de teléfono.";
+
+        Usuario usuario = usuarioDAO.validarDatosRecuperacion(
+                email.trim(), primerNombre.trim(), apellidoPaterno.trim(), telefono.trim());
+
+        if (usuario == null)
+            return "Los datos ingresados no coinciden con ningún usuario registrado.";
+
+        // PATRÓN PROTOTYPE: copia del perfil en memoria (igual que en login)
+        this.usuarioActual = usuario.clone();
+        return null;
+    }
+
+    /**
+     * PASO FINAL de recuperación: cambia la contraseña del usuario
+     * validado previamente (usuarioActual), tras verificar el código OTP.
+     *
+     * @param nuevaPassword       Nueva contraseña en texto plano
+     * @param confirmarPassword   Confirmación de la nueva contraseña
+     * Retorna null si fue exitoso, o un mensaje de error.
+     */
+    public String cambiarPassword(String nuevaPassword, String confirmarPassword) {
+
+        if (usuarioActual == null)
+            return "Sesión inválida. Inicie el proceso de recuperación nuevamente.";
+
+        if (!SeguridadUtil.passwordValida(nuevaPassword))
+            return "La nueva contraseña debe tener al menos 6 caracteres.";
+
+        if (nuevaPassword == null || !nuevaPassword.equals(confirmarPassword))
+            return "Las contraseñas no coinciden.";
+
+        String hashNueva = SeguridadUtil.hashSHA256(nuevaPassword);
+        boolean ok = usuarioDAO.actualizarPassword(usuarioActual.getIdUsuario(), hashNueva);
+
+        if (!ok) return "No se pudo actualizar la contraseña. Intente nuevamente.";
+        return null;
+    }
+
+    // ============================================================
     // GETTERS DE ESTADO
     // ============================================================
 
