@@ -8,7 +8,6 @@ import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
-import java.net.URL;
 
 /**
  * ============================================================
@@ -18,13 +17,7 @@ import java.net.URL;
  *   - Campos: correo electrónico y contraseña
  *   - Selección de canal de verificación (SMS o Correo)
  *   - Botón "Ingresar" → delega al Controlador
- *
- * Diseño basado en la identidad visual de Qori Bank:
- *   - Dorado principal:  #F5A800
- *   - Dorado oscuro:     #D48B00
- *   - Gris claro fondo:  #F0F0F0
- *   - Blanco:            #FFFFFF
- *   - Texto oscuro:      #2C2C2C
+ *   - Botón "Crear cuenta" → abre RegistroView
  *
  * Clase: LoginView
  * Módulo: Gestión de Usuarios y Autenticación — QoriBank
@@ -43,34 +36,27 @@ public class LoginView extends JFrame {
     static final Color ROJO_ERROR       = new Color(0xC0392B);
 
     // ----- Fuentes -----
-    static final Font FUENTE_TITULO     = new Font("Segoe UI", Font.BOLD, 22);
-    static final Font FUENTE_SUBTITULO  = new Font("Segoe UI", Font.PLAIN, 13);
-    static final Font FUENTE_LABEL      = new Font("Segoe UI", Font.BOLD, 12);
-    static final Font FUENTE_CAMPO      = new Font("Segoe UI", Font.PLAIN, 14);
-    static final Font FUENTE_BOTON      = new Font("Segoe UI", Font.BOLD, 14);
+    static final Font FUENTE_TITULO    = new Font("Segoe UI", Font.BOLD, 22);
+    static final Font FUENTE_SUBTITULO = new Font("Segoe UI", Font.PLAIN, 13);
+    static final Font FUENTE_LABEL     = new Font("Segoe UI", Font.BOLD, 12);
+    static final Font FUENTE_CAMPO     = new Font("Segoe UI", Font.PLAIN, 14);
+    static final Font FUENTE_BOTON     = new Font("Segoe UI", Font.BOLD, 14);
 
     // ----- Componentes -----
-    private JTextField   txtEmail;
+    private JTextField    txtEmail;
     private JPasswordField txtPassword;
-    private JRadioButton rbSMS;
-    private JRadioButton rbCorreo;
-    private JButton      btnIngresar;
-    private JLabel       lblError;
+    private JRadioButton  rbSMS;
+    private JRadioButton  rbCorreo;
+    private JButton       btnIngresar;
+    private JLabel        lblError;
 
-    // ----- Controlador (MVC) -----
     private final AutenticacionController controller;
 
-    // --------------------------------------------------------
-    // Constructor
-    // --------------------------------------------------------
     public LoginView() {
         this.controller = new AutenticacionController();
         initUI();
     }
 
-    // --------------------------------------------------------
-    // Construcción de la interfaz gráfica
-    // --------------------------------------------------------
     private void initUI() {
         setTitle("Qori Bank — Iniciar Sesión");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -78,7 +64,6 @@ public class LoginView extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // Panel raíz dividido: barra lateral dorada + área principal
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(GRIS_FONDO);
         setContentPane(root);
@@ -88,7 +73,7 @@ public class LoginView extends JFrame {
     }
 
     // --------------------------------------------------------
-    // Barra lateral dorada con logo y nombre del banco
+    // Barra lateral dorada
     // --------------------------------------------------------
     private JPanel crearBarraLateral() {
         JPanel barra = new JPanel() {
@@ -96,10 +81,8 @@ public class LoginView extends JFrame {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g;
-                // Degradado vertical dorado
                 GradientPaint grad = new GradientPaint(
-                        0, 0, DORADO_PRINCIPAL,
-                        0, getHeight(), DORADO_OSCURO);
+                        0, 0, DORADO_PRINCIPAL, 0, getHeight(), DORADO_OSCURO);
                 g2.setPaint(grad);
                 g2.fillRect(0, 0, getWidth(), getHeight());
             }
@@ -108,10 +91,8 @@ public class LoginView extends JFrame {
         barra.setLayout(new BoxLayout(barra, BoxLayout.Y_AXIS));
         barra.setBorder(BorderFactory.createEmptyBorder(50, 30, 30, 30));
 
-        // Icono del banco (Tumi) embebido como imagen base64 o placeholder
         JLabel lblIcono = new JLabel();
         lblIcono.setAlignmentX(Component.CENTER_ALIGNMENT);
-        // Intentar cargar el logo desde recursos; si no hay archivo, dibujar placeholder
         lblIcono.setIcon(crearIconoBanco(90, 90));
         barra.add(lblIcono);
 
@@ -133,7 +114,6 @@ public class LoginView extends JFrame {
 
         barra.add(Box.createVerticalGlue());
 
-        // Texto de pie en la barra
         JLabel lblPie = new JLabel("© 2026 Qori Bank");
         lblPie.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblPie.setForeground(new Color(255, 255, 255, 150));
@@ -144,7 +124,7 @@ public class LoginView extends JFrame {
     }
 
     // --------------------------------------------------------
-    // Panel principal con el formulario de login
+    // Panel principal de login
     // --------------------------------------------------------
     private JPanel crearPanelLogin() {
         JPanel panelOuter = new JPanel(new GridBagLayout());
@@ -162,14 +142,14 @@ public class LoginView extends JFrame {
         };
         card.setLayout(new GridBagLayout());
         card.setOpaque(false);
-        card.setPreferredSize(new Dimension(420, 460));
+        card.setPreferredSize(new Dimension(420, 500));
         card.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill      = GridBagConstraints.HORIZONTAL;
-        gbc.insets    = new Insets(6, 0, 6, 0);
-        gbc.gridx     = 0;
-        gbc.weightx   = 1.0;
+        gbc.fill    = GridBagConstraints.HORIZONTAL;
+        gbc.insets  = new Insets(6, 0, 6, 0);
+        gbc.gridx   = 0;
+        gbc.weightx = 1.0;
 
         // Título
         JLabel lblTitulo = new JLabel("Iniciar Sesión");
@@ -181,19 +161,19 @@ public class LoginView extends JFrame {
         JLabel lblSub = new JLabel("Ingrese sus credenciales para continuar");
         lblSub.setFont(FUENTE_SUBTITULO);
         lblSub.setForeground(Color.GRAY);
-        gbc.gridy = 1;
+        gbc.gridy  = 1;
         gbc.insets = new Insets(0, 0, 16, 0);
         card.add(lblSub, gbc);
 
-        // Campo Email
+        // Email
         gbc.insets = new Insets(4, 0, 2, 0);
         gbc.gridy  = 2;
         card.add(crearLabel("Correo Electrónico"), gbc);
-        txtEmail   = crearCampoTexto("Correo@ejemplo.com");
+        txtEmail   = crearCampoTexto("correo@ejemplo.com");
         gbc.gridy  = 3;
         card.add(txtEmail, gbc);
 
-        // Campo Contraseña
+        // Contraseña
         gbc.gridy = 4;
         card.add(crearLabel("Contraseña"), gbc);
         txtPassword = new JPasswordField();
@@ -202,31 +182,28 @@ public class LoginView extends JFrame {
         gbc.gridy = 5;
         card.add(txtPassword, gbc);
 
-        // Selección de canal de verificación
+        // Canal de verificación
         gbc.gridy  = 6;
         gbc.insets = new Insets(14, 0, 4, 0);
-        JLabel lblCanal = crearLabel("Método de verificación en dos pasos:");
-        card.add(lblCanal, gbc);
+        card.add(crearLabel("Método de verificación en dos pasos:"), gbc);
+
+        rbSMS    = crearRadioButton("SMS");
+        rbCorreo = crearRadioButton("Correo electrónico");
+        rbSMS.setSelected(true);
+        ButtonGroup grupo = new ButtonGroup();
+        grupo.add(rbSMS);
+        grupo.add(rbCorreo);
 
         JPanel panelCanal = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         panelCanal.setOpaque(false);
-        ButtonGroup grupo = new ButtonGroup();
-
-        rbSMS    = crearRadioButton("SMS al teléfono");
-        rbCorreo = crearRadioButton("Correo electrónico");
-        rbSMS.setSelected(true); // Canal por defecto
-
-        grupo.add(rbSMS);
-        grupo.add(rbCorreo);
         panelCanal.add(rbSMS);
         panelCanal.add(Box.createRigidArea(new Dimension(20, 0)));
         panelCanal.add(rbCorreo);
-
         gbc.gridy  = 7;
         gbc.insets = new Insets(2, 0, 16, 0);
         card.add(panelCanal, gbc);
 
-        // Etiqueta de error
+        // Error
         lblError = new JLabel("");
         lblError.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblError.setForeground(ROJO_ERROR);
@@ -237,14 +214,32 @@ public class LoginView extends JFrame {
 
         // Botón Ingresar
         btnIngresar = crearBotonPrincipal("Ingresar");
+        btnIngresar.addActionListener(e -> procesarLogin());
         gbc.gridy  = 9;
-        gbc.insets = new Insets(4, 0, 0, 0);
+        gbc.insets = new Insets(4, 0, 8, 0);
         card.add(btnIngresar, gbc);
 
-        // Registrar eventos
-        btnIngresar.addActionListener(e -> procesarLogin());
+        // Separador visual
+        JSeparator sep = new JSeparator();
+        sep.setForeground(new Color(0xDDDDDD));
+        gbc.gridy  = 10;
+        gbc.insets = new Insets(4, 0, 8, 0);
+        card.add(sep, gbc);
 
-        // Permitir Enter en los campos
+        // Botón Crear cuenta
+        JButton btnCrearCuenta = new JButton("¿No tienes cuenta? Regístrate aquí");
+        btnCrearCuenta.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        btnCrearCuenta.setForeground(DORADO_OSCURO);
+        btnCrearCuenta.setBorderPainted(false);
+        btnCrearCuenta.setContentAreaFilled(false);
+        btnCrearCuenta.setFocusPainted(false);
+        btnCrearCuenta.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnCrearCuenta.addActionListener(e -> abrirRegistro());
+        gbc.gridy  = 11;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        card.add(btnCrearCuenta, gbc);
+
+        // Enter en campos
         KeyAdapter enterListener = new KeyAdapter() {
             @Override public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) procesarLogin();
@@ -258,8 +253,7 @@ public class LoginView extends JFrame {
     }
 
     // --------------------------------------------------------
-    // Evento: botón Ingresar
-    // Delega validación al Controlador (MVC)
+    // Evento: Ingresar
     // --------------------------------------------------------
     private void procesarLogin() {
         String email    = txtEmail.getText().trim();
@@ -269,41 +263,31 @@ public class LoginView extends JFrame {
                 ? InicioSesion.CanalVerificacion.SMS
                 : InicioSesion.CanalVerificacion.CORREO;
 
-        // PASO 1: validar credenciales (Controller)
         String errorCredenciales = controller.validarCredenciales(email, password);
-        if (errorCredenciales != null) {
-            mostrarError(errorCredenciales);
-            return;
-        }
+        if (errorCredenciales != null) { mostrarError(errorCredenciales); return; }
 
-        // PASO 2: enviar código de verificación (Controller)
         String errorCodigo = controller.enviarCodigoVerificacion(canal);
-        if (errorCodigo != null) {
-            mostrarError(errorCodigo);
-            return;
-        }
+        if (errorCodigo != null) { mostrarError(errorCodigo); return; }
 
-        // Obtener el código para mostrarlo en el panel de verificación (simulación)
-        String codigoSimulado = controller.getCodigoGeneradoSimulacion();
-
-        // Abrir Vista de verificación de código
         limpiarError();
-        VerificacionCodigoView ventanaVerif = new VerificacionCodigoView(
-                controller, canal, codigoSimulado);
-        ventanaVerif.setVisible(true);
+        new VerificacionCodigoView(controller, canal,
+                controller.getCodigoGeneradoSimulacion()).setVisible(true);
+        this.setVisible(false);
+    }
+
+    // --------------------------------------------------------
+    // Evento: Crear cuenta → abre RegistroView
+    // --------------------------------------------------------
+    private void abrirRegistro() {
+        new RegistroView().setVisible(true);
         this.setVisible(false);
     }
 
     // --------------------------------------------------------
     // Helpers de UI
     // --------------------------------------------------------
-    private void mostrarError(String msg) {
-        lblError.setText(msg);
-    }
-
-    private void limpiarError() {
-        lblError.setText("");
-    }
+    private void mostrarError(String msg) { lblError.setText(msg); }
+    private void limpiarError()           { lblError.setText(""); }
 
     private JLabel crearLabel(String texto) {
         JLabel lbl = new JLabel(texto);
@@ -335,9 +319,8 @@ public class LoginView extends JFrame {
         campo.setBackground(GRIS_CAMPO);
         campo.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(0xCCCCCC), 1, true),
-                BorderFactory.createEmptyBorder(4, 10, 4, 10)
-        ));
-        ((JComponent) campo).setOpaque(true);
+                BorderFactory.createEmptyBorder(4, 10, 4, 10)));
+        campo.setOpaque(true);
     }
 
     private JRadioButton crearRadioButton(String texto) {
@@ -355,13 +338,9 @@ public class LoginView extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                if (getModel().isPressed()) {
-                    g2.setColor(DORADO_OSCURO);
-                } else if (getModel().isRollover()) {
-                    g2.setColor(DORADO_CLARO);
-                } else {
-                    g2.setColor(DORADO_PRINCIPAL);
-                }
+                g2.setColor(getModel().isPressed() ? DORADO_OSCURO
+                        : getModel().isRollover() ? DORADO_CLARO
+                        : DORADO_PRINCIPAL);
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
                 g2.setColor(TEXTO_OSCURO);
                 g2.setFont(getFont());
@@ -381,50 +360,28 @@ public class LoginView extends JFrame {
         return btn;
     }
 
-    /**
-     * Crea un icono placeholder con forma de "Tumi" dorado
-     * (se usa cuando no hay archivo de imagen disponible).
-     */
     private ImageIcon crearIconoBanco(int ancho, int alto) {
         java.awt.image.BufferedImage img =
                 new java.awt.image.BufferedImage(ancho, alto,
                         java.awt.image.BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = img.createGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // Fondo circular blanco translúcido
         g2.setColor(new Color(255, 255, 255, 60));
         g2.fillOval(0, 0, ancho, alto);
-
-        // Dibujo simplificado del tumi (cara con tocado)
-        // Cabeza
         g2.setColor(new Color(0xFFE066));
         g2.fillOval(ancho / 4, alto / 3, ancho / 2, alto * 2 / 5);
-        // Tocado semicircular
         g2.setColor(new Color(0xF5A800));
         g2.fillArc(ancho / 8, alto / 8, ancho * 3 / 4, alto * 2 / 3, 0, 180);
-        // Ojos
         g2.setColor(new Color(0x2C2C2C));
         g2.fillOval(ancho * 3 / 8, alto * 5 / 10, ancho / 10, alto / 10);
         g2.fillOval(ancho * 5 / 8 - ancho / 10, alto * 5 / 10, ancho / 10, alto / 10);
-
         g2.dispose();
         return new ImageIcon(img);
     }
 
-    // --------------------------------------------------------
-    // Punto de entrada principal
-    // --------------------------------------------------------
     public static void main(String[] args) {
-        // Aplicar look and feel del sistema
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            // Continuar con look and feel por defecto
-        }
-
-        SwingUtilities.invokeLater(() -> {
-            new LoginView().setVisible(true);
-        });
+        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
+        catch (Exception ignored) {}
+        SwingUtilities.invokeLater(() -> new LoginView().setVisible(true));
     }
 }
