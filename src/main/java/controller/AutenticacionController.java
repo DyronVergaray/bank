@@ -3,21 +3,21 @@ package controller;
 import model.*;
 import util.SeguridadUtil;
 
+import java.util.List;
+
 /**
  * ============================================================
  * CAPA: CONTROLLER — Autenticación
  * ============================================================
- * Gestiona todos los eventos del flujo de autenticación:
- *   1. Validar credenciales (email + contraseña)
- *   2. Crear sesión pendiente y enviar código de verificación
- *   3. Verificar el código ingresado por el usuario
+ * Gestiona todos los eventos del flujo de autenticación y
+ * las operaciones del panel de administración.
  *
  * Patrones en uso:
- *   - SINGLETON  → ConexionBD (acceso a BD)
- *   - FACTORY    → NotificacionFactory (crea SMS o Correo)
- *   - OBSERVER   → NotificacionObserver (envía el código)
- *   - STATE      → InicioSesion.EstadoSesion (flujo de estado)
- *   - PROTOTYPE  → Usuario.clone() (perfil temporal en sesión)
+ *   - SINGLETON  → ConexionBD
+ *   - FACTORY    → NotificacionFactory
+ *   - OBSERVER   → NotificacionObserver
+ *   - STATE      → InicioSesion.EstadoSesion
+ *   - PROTOTYPE  → Usuario.clone()
  *
  * Clase: AutenticacionController
  * Módulo: Gestión de Usuarios y Autenticación — QoriBank
@@ -25,179 +25,218 @@ import util.SeguridadUtil;
  */
 public class AutenticacionController {
 
-    // Acceso a datos (usa SINGLETON internamente)
     private final UsuarioDAO usuarioDAO;
 
-    // Sesión en curso (STATE)
     private InicioSesion sesionActual;
+    private Usuario      usuarioActual;
+    private String       codigoGenerado;
 
-    // Usuario autenticado (PROTOTYPE — copia del perfil)
-    private Usuario usuarioActual;
-
-    // Código en texto plano generado (para mostrarlo en la simulación)
-    private String codigoGenerado;
-
-    // --------------------------------------------------------
-    // Constructor
-    // --------------------------------------------------------
     public AutenticacionController() {
         this.usuarioDAO = new UsuarioDAO();
     }
 
+    // ============================================================
+    // FLUJO DE AUTENTICACIÓN (3 pasos)
+    // ============================================================
+
     // --------------------------------------------------------
     // PASO 1: Validar credenciales (email + contraseña)
-    //
-    // Retorna:
-    //   null  → credenciales válidas, continuar con el flujo
-    //   String → mensaje de error a mostrar en la Vista
+    // Retorna null si es correcto, o mensaje de error.
     // --------------------------------------------------------
     public String validarCredenciales(String email, String password) {
 
-        // Validaciones básicas (controlador)
-        if (email == null || email.trim().isEmpty()) {
+        if (email == null || email.trim().isEmpty())
             return "Ingrese su correo electrónico.";
-        }
-        if (!SeguridadUtil.emailValido(email.trim())) {
+
+        if (!SeguridadUtil.emailValido(email.trim()))
             return "El formato del correo no es válido.";
-        }
-        if (!SeguridadUtil.passwordValida(password)) {
+
+        if (!SeguridadUtil.passwordValida(password))
             return "La contraseña debe tener al menos 6 caracteres.";
-        }
 
-        // Hash de la contraseña para comparar con BD
         String hashPwd = SeguridadUtil.hashSHA256(password);
-
-        // Consulta a BD via DAO (Stored Procedure sp_ValidarCredenciales)
         Usuario usuario = usuarioDAO.validarCredenciales(email.trim(), hashPwd);
 
-        if (usuario == null) {
+        if (usuario == null)
             return "Correo o contraseña incorrectos.";
-        }
 
         // PATRÓN PROTOTYPE: almacenar copia del perfil en memoria
         this.usuarioActual = usuario.clone();
-
-        return null; // sin error → credenciales válidas
+        return null;
     }
 
     // --------------------------------------------------------
     // PASO 2: Enviar código de verificación al canal elegido
-    //
-    // @param canal  Canal seleccionado por el usuario (SMS o CORREO)
-    // Retorna:
-    //   null  → código enviado correctamente
-    //   String → mensaje de error
+    // Retorna null si es correcto, o mensaje de error.
     // --------------------------------------------------------
     public String enviarCodigoVerificacion(InicioSesion.CanalVerificacion canal) {
 
-        if (usuarioActual == null) {
+        if (usuarioActual == null)
             return "Sesión inválida. Inicie el proceso nuevamente.";
-        }
 
-        // Generar código de 6 dígitos y su hash para almacenar en BD
-        codigoGenerado          = SeguridadUtil.generarCodigo6Digitos();
-        String codigoHash       = SeguridadUtil.hashSHA256(codigoGenerado);
+        codigoGenerado    = SeguridadUtil.generarCodigo6Digitos();
+        String codigoHash = SeguridadUtil.hashSHA256(codigoGenerado);
 
-        // Guardar sesión pendiente en BD (Stored Procedure sp_CrearSesionConCodigo)
         int idSesion = usuarioDAO.crearSesionConCodigo(
-                usuarioActual.getIdUsuario(),
-                canal.getIdTipo(),
-                codigoHash
-        );
+                usuarioActual.getIdUsuario(), canal.getIdTipo(), codigoHash);
 
-        if (idSesion < 0) {
+        if (idSesion < 0)
             return "Error al crear la sesión. Intente nuevamente.";
-        }
 
-        // PATRÓN STATE: crear objeto de sesión con estado PENDIENTE
+        // PATRÓN STATE: objeto de sesión con estado PENDIENTE
         sesionActual = new InicioSesion(usuarioActual.getIdUsuario(), canal);
         sesionActual.setIdSesion(idSesion);
         sesionActual.setCodigoHash(codigoHash);
 
-        // Determinar destinatario según canal
         String destinatario = (canal == InicioSesion.CanalVerificacion.SMS)
                 ? usuarioActual.getTelefono()
                 : usuarioActual.getEmail();
 
-        // PATRÓN FACTORY: crear el notificador según canal
+        // PATRÓN FACTORY + OBSERVER: crear y enviar notificación
         NotificacionObserver notificador = NotificacionFactory.crear(canal);
-
-        // PATRÓN OBSERVER: enviar el código
         notificador.enviarCodigo(destinatario, codigoGenerado, usuarioActual.getPrimerNombre());
 
-        return null; // sin error
+        return null;
     }
 
     // --------------------------------------------------------
     // PASO 3: Verificar el código ingresado por el usuario
-    //
-    // Retorna:
-    //   null  → código correcto, sesión activada
-    //   String → mensaje de error
+    // Retorna null si es correcto, o mensaje de error.
     // --------------------------------------------------------
     public String verificarCodigo(String codigoIngresado) {
 
-        if (sesionActual == null) {
+        if (sesionActual == null)
             return "No hay una sesión pendiente.";
-        }
 
-        if (codigoIngresado == null || codigoIngresado.trim().isEmpty()) {
+        if (codigoIngresado == null || codigoIngresado.trim().isEmpty())
             return "Ingrese el código de verificación.";
-        }
 
-        // Hash del código ingresado para comparar
         String hashIngresado = SeguridadUtil.hashSHA256(codigoIngresado.trim());
+        String tokenSesion   = SeguridadUtil.generarTokenSesion();
 
-        // Generar token único para la sesión activa
-        String tokenSesion = SeguridadUtil.generarTokenSesion();
-
-        // Verificar en BD (Stored Procedure sp_VerificarCodigo)
         boolean correcto = usuarioDAO.verificarCodigo(
-                sesionActual.getIdSesion(),
-                hashIngresado,
-                tokenSesion
-        );
+                sesionActual.getIdSesion(), hashIngresado, tokenSesion);
 
         if (!correcto) {
-            // PATRÓN STATE: transición a RECHAZADA
-            sesionActual.rechazar();
+            sesionActual.rechazar();    // PATRÓN STATE → RECHAZADA
             return "Código incorrecto o expirado. Solicite uno nuevo.";
         }
 
-        // PATRÓN STATE: transición a VERIFICADA
         sesionActual.verificar(tokenSesion, java.time.LocalDateTime.now().plusHours(1));
-
-        return null; // sin error → autenticación exitosa
+        return null;
     }
 
-    // --------------------------------------------------------
-    // Obtiene el usuario autenticado actual
-    // --------------------------------------------------------
-    public Usuario getUsuarioActual() {
-        return usuarioActual;
+    // ============================================================
+    // REGISTRO DE NUEVO CLIENTE (público)
+    // ============================================================
+
+    /**
+     * Registra un nuevo usuario con rol CLIENTE.
+     * La contraseña se hashea aquí antes de persistirse.
+     *
+     * Retorna null si fue exitoso, o un mensaje de error.
+     */
+    public String registrarCliente(String primerNombre, String apellidoPaterno,
+                                   String apellidoMaterno, String email,
+                                   String telefono, String password) {
+        // Validaciones básicas
+        if (primerNombre == null || primerNombre.trim().isEmpty())
+            return "Ingrese su nombre.";
+        if (apellidoPaterno == null || apellidoPaterno.trim().isEmpty())
+            return "Ingrese su apellido paterno.";
+        if (!SeguridadUtil.emailValido(email))
+            return "El formato del correo no es válido.";
+        if (telefono == null || telefono.trim().isEmpty())
+            return "Ingrese su número de teléfono.";
+        if (!SeguridadUtil.passwordValida(password))
+            return "La contraseña debe tener al menos 6 caracteres.";
+
+        // Hash de la contraseña antes de persistir
+        String hashPwd = SeguridadUtil.hashSHA256(password);
+
+        int resultado = usuarioDAO.crearUsuarioCliente(
+                primerNombre.trim(), apellidoPaterno.trim(),
+                (apellidoMaterno != null ? apellidoMaterno.trim() : ""),
+                email.trim(), telefono.trim(), hashPwd);
+
+        if (resultado > 0) return null;          // éxito
+        if (resultado == -1) return "El correo electrónico ya está registrado.";
+        if (resultado == -2) return "El número de teléfono ya está registrado.";
+        return "Error interno al registrar. Intente nuevamente.";
     }
 
-    // --------------------------------------------------------
-    // Obtiene la sesión actual (para inspeccionar estado)
-    // --------------------------------------------------------
-    public InicioSesion getSesionActual() {
-        return sesionActual;
+    // ============================================================
+    // OPERACIONES DE ADMINISTRACIÓN
+    // ============================================================
+
+    /**
+     * Lista todos los usuarios del sistema.
+     * Solo debe llamarse desde el panel Admin.
+     */
+    public List<Usuario> obtenerTodosUsuarios() {
+        return usuarioDAO.obtenerTodosUsuarios();
     }
 
-    // --------------------------------------------------------
-    // Obtiene el código generado (solo para entorno de pruebas/simulación)
-    // En producción este método no debería existir.
-    // --------------------------------------------------------
-    public String getCodigoGeneradoSimulacion() {
-        return codigoGenerado;
+    /**
+     * Elimina un usuario por su id.
+     * No permite que un admin se elimine a sí mismo.
+     *
+     * Retorna null si fue exitoso, o un mensaje de error.
+     */
+    public String eliminarUsuario(int idUsuario) {
+        if (usuarioActual != null && usuarioActual.getIdUsuario() == idUsuario)
+            return "No puede eliminar su propia cuenta.";
+
+        boolean ok = usuarioDAO.eliminarUsuario(idUsuario);
+        return ok ? null : "No se pudo eliminar el usuario.";
     }
 
-    // --------------------------------------------------------
-    // Cierra la sesión actual y limpia el estado en memoria
-    // --------------------------------------------------------
+    /**
+     * Crea un nuevo usuario con rol ADMIN.
+     * La contraseña se hashea aquí antes de persistirse.
+     *
+     * Retorna null si fue exitoso, o un mensaje de error.
+     */
+    public String crearAdmin(String primerNombre, String apellidoPaterno,
+                             String apellidoMaterno, String email,
+                             String telefono, String password) {
+        // Validaciones básicas
+        if (primerNombre == null || primerNombre.trim().isEmpty())
+            return "Ingrese el nombre del administrador.";
+        if (apellidoPaterno == null || apellidoPaterno.trim().isEmpty())
+            return "Ingrese el apellido paterno.";
+        if (!SeguridadUtil.emailValido(email))
+            return "El formato del correo no es válido.";
+        if (telefono == null || telefono.trim().isEmpty())
+            return "Ingrese el número de teléfono.";
+        if (!SeguridadUtil.passwordValida(password))
+            return "La contraseña debe tener al menos 6 caracteres.";
+
+        // Hash de la contraseña antes de persistir
+        String hashPwd = SeguridadUtil.hashSHA256(password);
+
+        int resultado = usuarioDAO.crearUsuarioAdmin(
+                primerNombre.trim(), apellidoPaterno.trim(),
+                (apellidoMaterno != null ? apellidoMaterno.trim() : ""),
+                email.trim(), telefono.trim(), hashPwd);
+
+        if (resultado > 0) return null;
+        if (resultado == -1) return "El correo electrónico ya está registrado.";
+        if (resultado == -2) return "El número de teléfono ya está registrado.";
+        return "Error interno al crear administrador. Intente nuevamente.";
+    }
+
+    // ============================================================
+    // GETTERS DE ESTADO
+    // ============================================================
+
+    public Usuario      getUsuarioActual()             { return usuarioActual;  }
+    public InicioSesion getSesionActual()              { return sesionActual;   }
+    public String       getCodigoGeneradoSimulacion()  { return codigoGenerado; }
+
     public void cerrarSesion() {
-        sesionActual  = null;
-        usuarioActual = null;
+        sesionActual   = null;
+        usuarioActual  = null;
         codigoGenerado = null;
     }
 }

@@ -17,13 +17,7 @@ import java.time.format.DateTimeFormatter;
  * CAPA: VIEW — Vista de Bienvenida
  * ============================================================
  * Pantalla final del flujo de autenticación.
- * Se muestra al usuario después de verificar su código OTP.
- *
- * Muestra:
- *   - Saludo personalizado con nombre del usuario
- *   - Tarjeta con información completa del perfil
- *   - Estado de sesión activa (PATRÓN STATE)
- *   - Botón para cerrar sesión
+ * Si el usuario es ADMIN, muestra el botón "Panel Admin".
  *
  * Clase: BienvenidaView
  * Módulo: Gestión de Usuarios y Autenticación — QoriBank
@@ -38,20 +32,15 @@ public class BienvenidaView extends JFrame {
     private static final Color BLANCO           = LoginView.BLANCO;
     private static final Color TEXTO_OSCURO     = LoginView.TEXTO_OSCURO;
     private static final Color VERDE_ACTIVO     = new Color(0x27AE60);
+    private static final Color AZUL_ADMIN       = new Color(0x2980B9);
 
     private final AutenticacionController controller;
 
-    // --------------------------------------------------------
-    // Constructor
-    // --------------------------------------------------------
     public BienvenidaView(AutenticacionController controller) {
         this.controller = controller;
         initUI();
     }
 
-    // --------------------------------------------------------
-    // Construcción de la interfaz
-    // --------------------------------------------------------
     private void initUI() {
         setTitle("Qori Bank — Bienvenido");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -59,8 +48,8 @@ public class BienvenidaView extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
-        Usuario usuario  = controller.getUsuarioActual();
-        InicioSesion ses = controller.getSesionActual();
+        Usuario      usuario = controller.getUsuarioActual();
+        InicioSesion ses     = controller.getSesionActual();
 
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(GRIS_FONDO);
@@ -71,7 +60,7 @@ public class BienvenidaView extends JFrame {
     }
 
     // --------------------------------------------------------
-    // Barra lateral con avatar e información del usuario
+    // Barra lateral
     // --------------------------------------------------------
     private JPanel crearBarraLateral(Usuario usuario) {
         JPanel barra = new JPanel() {
@@ -80,8 +69,7 @@ public class BienvenidaView extends JFrame {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g;
                 GradientPaint grad = new GradientPaint(
-                        0, 0, DORADO_PRINCIPAL,
-                        0, getHeight(), DORADO_OSCURO);
+                        0, 0, DORADO_PRINCIPAL, 0, getHeight(), DORADO_OSCURO);
                 g2.setPaint(grad);
                 g2.fillRect(0, 0, getWidth(), getHeight());
             }
@@ -90,7 +78,6 @@ public class BienvenidaView extends JFrame {
         barra.setLayout(new BoxLayout(barra, BoxLayout.Y_AXIS));
         barra.setBorder(BorderFactory.createEmptyBorder(40, 25, 30, 25));
 
-        // Logo Qori Bank
         JLabel lblLogo = new JLabel("Qori Bank");
         lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblLogo.setForeground(BLANCO);
@@ -99,14 +86,12 @@ public class BienvenidaView extends JFrame {
 
         barra.add(Box.createRigidArea(new Dimension(0, 30)));
 
-        // Avatar circular con inicial del nombre
         JPanel avatar = crearAvatar(usuario.getPrimerNombre(), 70);
         avatar.setAlignmentX(Component.CENTER_ALIGNMENT);
         barra.add(avatar);
 
         barra.add(Box.createRigidArea(new Dimension(0, 14)));
 
-        // Nombre del usuario
         JLabel lblNombre = new JLabel(
                 "<html><center>" + usuario.getNombreCompleto() + "</center></html>");
         lblNombre.setFont(new Font("Segoe UI", Font.BOLD, 15));
@@ -116,15 +101,22 @@ public class BienvenidaView extends JFrame {
 
         barra.add(Box.createRigidArea(new Dimension(0, 6)));
 
-        // Badge "Activo"
+        // Badge de rol
+        JLabel lblRol = crearBadgeRol(usuario.getRol());
+        lblRol.setAlignmentX(Component.CENTER_ALIGNMENT);
+        barra.add(lblRol);
+
+        barra.add(Box.createRigidArea(new Dimension(0, 6)));
+
         JLabel lblActivo = crearBadgeActivo();
         lblActivo.setAlignmentX(Component.CENTER_ALIGNMENT);
         barra.add(lblActivo);
 
         barra.add(Box.createVerticalGlue());
 
-        // Menú de módulos (deshabilitados — solo Módulo 1 activo)
-        String[] modulos = {"🏠  Inicio", "💳  Mis Cuentas", "↗️  Transferencias", "🔔  Notificaciones"};
+        // Módulos del menú
+        String[] modulos = {"🏠  Inicio", "💳  Mis Cuentas",
+                            "↗️  Transferencias", "🔔  Notificaciones"};
         for (String mod : modulos) {
             JLabel lbl = new JLabel(mod);
             lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -134,17 +126,25 @@ public class BienvenidaView extends JFrame {
             barra.add(Box.createRigidArea(new Dimension(0, 10)));
         }
 
-        barra.add(Box.createRigidArea(new Dimension(0, 10)));
+        barra.add(Box.createRigidArea(new Dimension(0, 6)));
 
-        // Botón cerrar sesión
+        // Botón Panel Admin (solo para ADMIN)
+        if (usuario.esAdmin()) {
+            JButton btnAdmin = crearBotonBarra("⚙️  Panel Admin", AZUL_ADMIN);
+            btnAdmin.addActionListener(e -> abrirPanelAdmin());
+            btnAdmin.setAlignmentX(Component.CENTER_ALIGNMENT);
+            barra.add(btnAdmin);
+            barra.add(Box.createRigidArea(new Dimension(0, 8)));
+        }
+
+        // Botón Cerrar Sesión
         JButton btnCerrar = new JButton("Cerrar Sesión");
         btnCerrar.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btnCerrar.setForeground(DORADO_OSCURO);
         btnCerrar.setBackground(BLANCO);
         btnCerrar.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(BLANCO, 1, true),
-                BorderFactory.createEmptyBorder(6, 16, 6, 16)
-        ));
+                BorderFactory.createEmptyBorder(6, 16, 6, 16)));
         btnCerrar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnCerrar.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnCerrar.setMaximumSize(new Dimension(180, 34));
@@ -155,7 +155,7 @@ public class BienvenidaView extends JFrame {
     }
 
     // --------------------------------------------------------
-    // Panel principal de bienvenida con datos del usuario
+    // Panel principal de bienvenida
     // --------------------------------------------------------
     private JPanel crearPanelBienvenida(Usuario usuario, InicioSesion sesion) {
         JPanel panelOuter = new JPanel(new GridBagLayout());
@@ -166,7 +166,6 @@ public class BienvenidaView extends JFrame {
         contenido.setOpaque(false);
         contenido.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
 
-        // ── Saludo ──────────────────────────────────────────
         JLabel lblSaludo = new JLabel(
                 "¡Bienvenido, " + usuario.getPrimerNombre() + "! 👋");
         lblSaludo.setFont(new Font("Segoe UI", Font.BOLD, 26));
@@ -174,9 +173,8 @@ public class BienvenidaView extends JFrame {
         lblSaludo.setAlignmentX(Component.LEFT_ALIGNMENT);
         contenido.add(lblSaludo);
 
-        JLabel lblFecha = new JLabel(
-                "Sesión iniciada el " + LocalDateTime.now()
-                        .format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'a las' HH:mm")));
+        JLabel lblFecha = new JLabel("Sesión iniciada el " + LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'a las' HH:mm")));
         lblFecha.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblFecha.setForeground(Color.GRAY);
         lblFecha.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -184,29 +182,27 @@ public class BienvenidaView extends JFrame {
 
         contenido.add(Box.createRigidArea(new Dimension(0, 24)));
 
-        // ── Tarjeta de información del perfil ───────────────
         JPanel tarjeta = crearTarjetaPerfil(usuario, sesion);
         tarjeta.setAlignmentX(Component.LEFT_ALIGNMENT);
         contenido.add(tarjeta);
 
         contenido.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // ── Mensaje de sesión verificada ────────────────────
+        // Panel de estado de sesión (STATE)
         JPanel panelEstado = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
         panelEstado.setBackground(new Color(0xEAF7EE));
         panelEstado.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(VERDE_ACTIVO, 1, true),
-                BorderFactory.createEmptyBorder(0, 4, 0, 4)
-        ));
+                BorderFactory.createEmptyBorder(0, 4, 0, 4)));
         panelEstado.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
 
         JLabel lblEstadoIcono = new JLabel("✅");
         lblEstadoIcono.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         panelEstado.add(lblEstadoIcono);
 
-        // PATRÓN STATE: mostrar el estado actual de la sesión
         String estadoTexto = sesion != null
-                ? "Sesión " + sesion.getEstado().name() + " — autenticación de dos factores completada."
+                ? "Sesión " + sesion.getEstado().name()
+                  + " — autenticación de dos factores completada."
                 : "Sesión VERIFICADA — autenticación completada.";
         JLabel lblEstado = new JLabel(estadoTexto);
         lblEstado.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -221,7 +217,7 @@ public class BienvenidaView extends JFrame {
     }
 
     // --------------------------------------------------------
-    // Tarjeta con los datos del usuario
+    // Tarjeta de perfil con fila "Rol"
     // --------------------------------------------------------
     private JPanel crearTarjetaPerfil(Usuario usuario, InicioSesion sesion) {
         JPanel tarjeta = new JPanel() {
@@ -231,7 +227,6 @@ public class BienvenidaView extends JFrame {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(BLANCO);
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 16, 16));
-                // Franja dorada superior
                 g2.setColor(DORADO_PRINCIPAL);
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), 6, 6, 6));
                 g2.dispose();
@@ -240,55 +235,45 @@ public class BienvenidaView extends JFrame {
         tarjeta.setLayout(new GridBagLayout());
         tarjeta.setOpaque(false);
         tarjeta.setBorder(BorderFactory.createEmptyBorder(22, 28, 22, 28));
-        tarjeta.setMaximumSize(new Dimension(Integer.MAX_VALUE, 260));
+        tarjeta.setMaximumSize(new Dimension(Integer.MAX_VALUE, 280));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(6, 8, 6, 24);
 
-        // Encabezado de la tarjeta
         JLabel lblTitulo = new JLabel("Información del Perfil");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lblTitulo.setForeground(TEXTO_OSCURO);
-        gbc.gridx = 0; gbc.gridy = 0;
-        gbc.gridwidth = 4;
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 4;
         gbc.insets = new Insets(0, 8, 14, 8);
         tarjeta.add(lblTitulo, gbc);
         gbc.gridwidth = 1;
 
-        // Separador
         JSeparator sep = new JSeparator();
         sep.setForeground(new Color(0xE0E0E0));
-        gbc.gridx = 0; gbc.gridy = 1;
-        gbc.gridwidth = 4;
+        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 4;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 8, 14, 8);
         tarjeta.add(sep, gbc);
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
 
-        // Fila de datos
         String[][] datos = {
-            {"👤  Nombre completo:",  usuario.getNombreCompleto()},
-            {"✉️  Correo:",           usuario.getEmail()},
-            {"📱  Teléfono:",         usuario.getTelefono()},
-            {"🔒  ID de Usuario:",    "#" + usuario.getIdUsuario()},
-            {"📅  Inicio de sesión:", LocalDateTime.now()
-                    .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))},
-            {"🛡️  Canal 2FA:",        sesion != null
-                    ? sesion.getCanal().getNombre()
-                    : "N/A"}
+            {"👤  Nombre completo:", usuario.getNombreCompleto()},
+            {"✉️  Correo:",          usuario.getEmail()},
+            {"📱  Teléfono:",        usuario.getTelefono()},
+            {"🔑  Rol:",             usuario.getRol()},
+            {"🔒  ID de Usuario:",   "#" + usuario.getIdUsuario()},
+            {"🛡️  Canal 2FA:",       sesion != null ? sesion.getCanal().getNombre() : "N/A"}
         };
 
-        int fila = 2;
-        int col  = 0;
+        int fila = 2, col = 0;
         for (String[] par : datos) {
             gbc.insets = new Insets(5, 8, 5, 4);
             JLabel lbl = new JLabel(par[0]);
             lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
             lbl.setForeground(Color.GRAY);
-            gbc.gridx = col * 2;
-            gbc.gridy = fila;
+            gbc.gridx = col * 2; gbc.gridy = fila;
             tarjeta.add(lbl, gbc);
 
             gbc.insets = new Insets(5, 0, 5, 24);
@@ -301,12 +286,34 @@ public class BienvenidaView extends JFrame {
             col++;
             if (col == 2) { col = 0; fila++; }
         }
-
         return tarjeta;
     }
 
     // --------------------------------------------------------
-    // Avatar circular con inicial del nombre
+    // Evento: abrir panel de administración
+    // --------------------------------------------------------
+    private void abrirPanelAdmin() {
+        new AdminView(controller).setVisible(true);
+        this.setVisible(false);
+    }
+
+    // --------------------------------------------------------
+    // Cerrar sesión
+    // --------------------------------------------------------
+    private void cerrarSesion() {
+        int op = JOptionPane.showConfirmDialog(this,
+                "¿Está seguro que desea cerrar sesión?",
+                "Cerrar Sesión — Qori Bank",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (op == JOptionPane.YES_OPTION) {
+            controller.cerrarSesion();
+            new LoginView().setVisible(true);
+            this.dispose();
+        }
+    }
+
+    // --------------------------------------------------------
+    // Helpers de UI
     // --------------------------------------------------------
     private JPanel crearAvatar(String nombre, int tam) {
         JPanel panel = new JPanel() {
@@ -314,22 +321,19 @@ public class BienvenidaView extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Fondo blanco semitransparente
                 g2.setColor(new Color(255, 255, 255, 80));
                 g2.fillOval(0, 0, tam, tam);
-                // Borde blanco
                 g2.setColor(BLANCO);
                 g2.setStroke(new BasicStroke(3));
                 g2.drawOval(1, 1, tam - 2, tam - 2);
-                // Letra inicial
                 g2.setColor(BLANCO);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, tam / 2));
-                String inicial = nombre != null && !nombre.isEmpty()
+                String inicial = (nombre != null && !nombre.isEmpty())
                         ? String.valueOf(nombre.charAt(0)).toUpperCase() : "?";
                 FontMetrics fm = g2.getFontMetrics();
-                int x = (tam - fm.stringWidth(inicial)) / 2;
-                int y = (tam + fm.getAscent() - fm.getDescent()) / 2;
-                g2.drawString(inicial, x, y);
+                g2.drawString(inicial,
+                        (tam - fm.stringWidth(inicial)) / 2,
+                        (tam + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
@@ -346,7 +350,8 @@ public class BienvenidaView extends JFrame {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(VERDE_ACTIVO);
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), getHeight(), getHeight()));
+                g2.fill(new RoundRectangle2D.Float(
+                        0, 0, getWidth(), getHeight(), getHeight(), getHeight()));
                 g2.dispose();
                 super.paintComponent(g);
             }
@@ -357,21 +362,51 @@ public class BienvenidaView extends JFrame {
         return badge;
     }
 
-    // --------------------------------------------------------
-    // Cerrar sesión → volver al Login
-    // --------------------------------------------------------
-    private void cerrarSesion() {
-        int opcion = JOptionPane.showConfirmDialog(
-                this,
-                "¿Está seguro que desea cerrar sesión?",
-                "Cerrar Sesión — Qori Bank",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
-        if (opcion == JOptionPane.YES_OPTION) {
-            controller.cerrarSesion();
-            new LoginView().setVisible(true);
-            this.dispose();
-        }
+    private JLabel crearBadgeRol(String rol) {
+        boolean esAdmin = "ADMIN".equalsIgnoreCase(rol);
+        Color color = esAdmin ? AZUL_ADMIN : new Color(0x7F8C8D);
+        JLabel badge = new JLabel("  " + rol + "  ") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(color);
+                g2.fill(new RoundRectangle2D.Float(
+                        0, 0, getWidth(), getHeight(), getHeight(), getHeight()));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        badge.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        badge.setForeground(BLANCO);
+        badge.setOpaque(false);
+        return badge;
+    }
+
+    private JButton crearBotonBarra(String texto, Color color) {
+        JButton btn = new JButton(texto) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover()
+                        ? color.brighter() : color);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
+                g2.setColor(BLANCO);
+                g2.setFont(getFont());
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(),
+                        (getWidth()  - fm.stringWidth(getText())) / 2,
+                        (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btn.setMaximumSize(new Dimension(180, 34));
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
     }
 }

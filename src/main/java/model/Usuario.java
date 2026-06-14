@@ -16,13 +16,14 @@ package model;
 public class Usuario implements Cloneable {
 
     // --- Atributos mapeados a la tabla dbo.Usuario ---
-    private int    idUsuario;
-    private String primerNombre;
-    private String apellidoPaterno;
-    private String apellidoMaterno;
-    private String email;
-    private String telefono;
-    private String passwordHash;
+    private int     idUsuario;
+    private String  primerNombre;
+    private String  apellidoPaterno;
+    private String  apellidoMaterno;
+    private String  email;
+    private String  telefono;
+    private String  passwordHash;
+    private String  rol;      // 'CLIENTE' o 'ADMIN'
     private boolean activo;
 
     // --------------------------------------------------------
@@ -35,7 +36,7 @@ public class Usuario implements Cloneable {
     // --------------------------------------------------------
     public Usuario(int idUsuario, String primerNombre, String apellidoPaterno,
                    String apellidoMaterno, String email, String telefono,
-                   String passwordHash, boolean activo) {
+                   String passwordHash, String rol, boolean activo) {
         this.idUsuario       = idUsuario;
         this.primerNombre    = primerNombre;
         this.apellidoPaterno = apellidoPaterno;
@@ -43,25 +44,24 @@ public class Usuario implements Cloneable {
         this.email           = email;
         this.telefono        = telefono;
         this.passwordHash    = passwordHash;
+        this.rol             = rol;
         this.activo          = activo;
     }
 
     // --------------------------------------------------------
     // PROTOTYPE: clonar perfil de usuario
-    // Retorna una copia profunda del objeto actual
     // --------------------------------------------------------
     @Override
     public Usuario clone() {
         try {
             return (Usuario) super.clone();
         } catch (CloneNotSupportedException e) {
-            // Nunca ocurrirá ya que implementamos Cloneable
             throw new RuntimeException("[Usuario] Error al clonar perfil: " + e.getMessage());
         }
     }
 
     // --------------------------------------------------------
-    // Método utilitario: nombre completo formateado
+    // Helpers
     // --------------------------------------------------------
     public String getNombreCompleto() {
         return primerNombre + " " + apellidoPaterno
@@ -69,78 +69,46 @@ public class Usuario implements Cloneable {
                   ? " " + apellidoMaterno : "");
     }
 
+    public boolean esAdmin() {
+        return "ADMIN".equalsIgnoreCase(rol);
+    }
+
     // --------------------------------------------------------
     // Getters y Setters
     // --------------------------------------------------------
-    public int getIdUsuario() {
-        return idUsuario;
-    }
+    public int getIdUsuario()                       { return idUsuario; }
+    public void setIdUsuario(int idUsuario)         { this.idUsuario = idUsuario; }
 
-    public void setIdUsuario(int idUsuario) {
-        this.idUsuario = idUsuario;
-    }
+    public String getPrimerNombre()                 { return primerNombre; }
+    public void setPrimerNombre(String v)           { this.primerNombre = v; }
 
-    public String getPrimerNombre() {
-        return primerNombre;
-    }
+    public String getApellidoPaterno()              { return apellidoPaterno; }
+    public void setApellidoPaterno(String v)        { this.apellidoPaterno = v; }
 
-    public void setPrimerNombre(String primerNombre) {
-        this.primerNombre = primerNombre;
-    }
+    public String getApellidoMaterno()              { return apellidoMaterno; }
+    public void setApellidoMaterno(String v)        { this.apellidoMaterno = v; }
 
-    public String getApellidoPaterno() {
-        return apellidoPaterno;
-    }
+    public String getEmail()                        { return email; }
+    public void setEmail(String v)                  { this.email = v; }
 
-    public void setApellidoPaterno(String apellidoPaterno) {
-        this.apellidoPaterno = apellidoPaterno;
-    }
+    public String getTelefono()                     { return telefono; }
+    public void setTelefono(String v)               { this.telefono = v; }
 
-    public String getApellidoMaterno() {
-        return apellidoMaterno;
-    }
+    public String getPasswordHash()                 { return passwordHash; }
+    public void setPasswordHash(String v)           { this.passwordHash = v; }
 
-    public void setApellidoMaterno(String apellidoMaterno) {
-        this.apellidoMaterno = apellidoMaterno;
-    }
+    public String getRol()                          { return rol; }
+    public void setRol(String rol)                  { this.rol = rol; }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getTelefono() {
-        return telefono;
-    }
-
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public boolean isActivo() {
-        return activo;
-    }
-
-    public void setActivo(boolean activo) {
-        this.activo = activo;
-    }
+    public boolean isActivo()                       { return activo; }
+    public void setActivo(boolean activo)           { this.activo = activo; }
 
     @Override
     public String toString() {
         return "Usuario{id=" + idUsuario
                + ", nombre='" + getNombreCompleto() + "'"
                + ", email='" + email + "'"
+               + ", rol='" + rol + "'"
                + ", activo=" + activo + "}";
     }
 }
