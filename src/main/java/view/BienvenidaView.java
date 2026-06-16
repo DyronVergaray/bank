@@ -96,7 +96,10 @@ public class BienvenidaView extends JFrame {
                 "<html><center>" + usuario.getNombreCompleto() + "</center></html>");
         lblNombre.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lblNombre.setForeground(BLANCO);
+        lblNombre.setHorizontalAlignment(SwingConstants.CENTER);
         lblNombre.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblNombre.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        lblNombre.setPreferredSize(new Dimension(210, 40));
         barra.add(lblNombre);
 
         barra.add(Box.createRigidArea(new Dimension(0, 6)));

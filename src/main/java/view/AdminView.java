@@ -99,14 +99,14 @@ public class AdminView extends JFrame {
         barra.setPreferredSize(new Dimension(0, 70));
         barra.setMinimumSize(new Dimension(0, 70));
         barra.setLayout(new BorderLayout());
-        barra.setBorder(BorderFactory.createEmptyBorder(0, 28, 0, 28));
+        barra.setBorder(BorderFactory.createEmptyBorder(18, 28, 18, 28));
 
         // Título izquierda
         JPanel izq = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         izq.setOpaque(false);
 
         JLabel lblIcono = new JLabel("⚙");
-        lblIcono.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 24));
+        lblIcono.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 22));
         lblIcono.setForeground(BLANCO);
 
         JLabel lblTitulo = new JLabel("Panel de Administración");
@@ -344,7 +344,7 @@ public class AdminView extends JFrame {
             {"Apellido Paterno *",     null},
             {"Apellido Materno",       null},
             {"Correo Electrónico *",   null},
-            {"Teléfono *",             null},
+            {"Teléfono * (9 dígitos, sin +51)", null},
             {"Contraseña * (mín. 6)", "pwd"}
         };
 
@@ -386,6 +386,7 @@ public class AdminView extends JFrame {
         txtApellidoM = refs[2];
         txtEmail     = refs[3];
         txtTelefono  = refs[4];
+        aplicarFiltroTelefono(txtTelefono);
 
         // Mensajes de feedback
         lblFormError = new JLabel("");
@@ -683,5 +684,24 @@ public class AdminView extends JFrame {
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setFocusPainted(false);
         return btn;
+    }
+
+    /**
+     * Restringe un campo de texto para que solo acepte dígitos
+     * y un máximo de 9 caracteres (formato de teléfono sin +51).
+     */
+    private void aplicarFiltroTelefono(JTextField campo) {
+        campo.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                char c = e.getKeyChar();
+                if (!Character.isDigit(c) && c != KeyEvent.VK_BACK_SPACE) {
+                    e.consume();
+                }
+                if (campo.getText().length() >= 9 && c != KeyEvent.VK_BACK_SPACE) {
+                    e.consume();
+                }
+            }
+        });
     }
 }

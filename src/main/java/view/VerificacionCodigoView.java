@@ -101,55 +101,61 @@ public class VerificacionCodigoView extends JFrame {
                 g2.fillRect(0, 0, getWidth(), getHeight());
             }
         };
-        barra.setPreferredSize(new Dimension(260, 0));
-        barra.setLayout(new BoxLayout(barra, BoxLayout.Y_AXIS));
-        barra.setBorder(BorderFactory.createEmptyBorder(50, 30, 30, 30));
+        barra.setPreferredSize(new Dimension(260, 580));
+        barra.setLayout(null); // posicionamiento absoluto manual
 
-        // Ícono del candado de seguridad
-        JLabel lblIcono = new JLabel("🔐") {
-            { setFont(new Font("Segoe UI Emoji", Font.PLAIN, 60)); }
+        int anchoBarra = 260;
+
+        // Ícono de seguridad
+        JLabel lblIcono = new JLabel("\u26BF", SwingConstants.CENTER) {
+            { setFont(new Font("Segoe UI Symbol", Font.PLAIN, 60)); }
         };
-        lblIcono.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblIcono.setBounds(0, 110, anchoBarra, 70);
         barra.add(lblIcono);
 
-        barra.add(Box.createRigidArea(new Dimension(0, 20)));
-
-        JLabel lblTitulo = new JLabel("Verificación");
+        // Título "Verificación"
+        JLabel lblTitulo = new JLabel("Verificación", SwingConstants.CENTER);
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTitulo.setForeground(BLANCO);
-        lblTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblTitulo.setBounds(0, 200, anchoBarra, 32);
         barra.add(lblTitulo);
 
-        barra.add(Box.createRigidArea(new Dimension(0, 10)));
-
+        // Descripción del canal
         String canalNombre = canal == InicioSesion.CanalVerificacion.SMS
                 ? "SMS" : "Correo";
         JLabel lblDesc = new JLabel(
-                "<html><center>Código enviado por<br><b>" + canalNombre + "</b></center></html>");
+                "<html><div style='text-align:center;'>Código enviado por<br><b>"
+                + canalNombre + "</b></div></html>", SwingConstants.CENTER);
         lblDesc.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblDesc.setForeground(new Color(255, 255, 255, 200));
-        lblDesc.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblDesc.setBounds(0, 240, anchoBarra, 50);
         barra.add(lblDesc);
-
-        barra.add(Box.createVerticalGlue());
 
         // Pasos visuales del flujo (texto distinto según el modo)
         String paso1Texto = modoRecuperacion
-                ? "✅  Datos verificados"
-                : "✅  Credenciales validadas";
+                ? "Datos verificados"
+                : "Credenciales validadas";
         String paso3Texto = modoRecuperacion
-                ? "○  Nueva contraseña"
-                : "○  Acceso al sistema";
+                ? "Nueva contraseña"
+                : "Acceso al sistema";
+
+        int margenPasos = 0;
+        int anchoPasos  = anchoBarra;
 
         JLabel lblPaso1 = etiquetaPaso(paso1Texto);
-        JLabel lblPaso2 = etiquetaPaso("▶  Ingresar código");
-        JLabel lblPaso3 = etiquetaPasoGris(paso3Texto);
+        lblPaso1.setHorizontalAlignment(SwingConstants.CENTER);
+        lblPaso1.setBounds(margenPasos, 420, anchoPasos, 20);
         barra.add(lblPaso1);
-        barra.add(Box.createRigidArea(new Dimension(0, 8)));
+
+        JLabel lblPaso2 = etiquetaPaso("Ingresar código");
+        lblPaso2.setHorizontalAlignment(SwingConstants.CENTER);
+        lblPaso2.setBounds(margenPasos, 448, anchoPasos, 20);
         barra.add(lblPaso2);
-        barra.add(Box.createRigidArea(new Dimension(0, 8)));
+
+        JLabel lblPaso3 = etiquetaPasoGris(paso3Texto);
+        lblPaso3.setHorizontalAlignment(SwingConstants.CENTER);
+        lblPaso3.setBounds(margenPasos, 476, anchoPasos, 20);
         barra.add(lblPaso3);
-        barra.add(Box.createRigidArea(new Dimension(0, 20)));
 
         return barra;
     }
@@ -209,7 +215,7 @@ public class VerificacionCodigoView extends JFrame {
                 BorderFactory.createEmptyBorder(10, 14, 10, 14)
         ));
         lblSimulacion = new JLabel(
-                "<html><b>🧪 Simulación:</b> Código enviado → <span style='font-size:16pt'>"
+                "<html><b>Simulación:</b> Código enviado &rarr; <span style='font-size:16pt'>"
                 + codigoSimulado + "</span></html>");
         lblSimulacion.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblSimulacion.setForeground(new Color(0x7A5000));
@@ -255,7 +261,7 @@ public class VerificacionCodigoView extends JFrame {
         gbc.insets = new Insets(0, 0, 8, 0);
         card.add(txtCodigo, gbc);
 
-        JLabel lblExpira = new JLabel("⏱ Válido por 10 minutos");
+        JLabel lblExpira = new JLabel("Válido por 10 minutos");
         lblExpira.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblExpira.setForeground(Color.GRAY);
         gbc.gridy  = 5;
@@ -370,7 +376,9 @@ public class VerificacionCodigoView extends JFrame {
         JLabel lbl = new JLabel(texto);
         lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lbl.setForeground(BLANCO);
-        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lbl.setHorizontalAlignment(SwingConstants.CENTER);
+        lbl.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         return lbl;
     }
 
@@ -378,7 +386,9 @@ public class VerificacionCodigoView extends JFrame {
         JLabel lbl = new JLabel(texto);
         lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lbl.setForeground(new Color(255, 255, 255, 120));
-        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lbl.setHorizontalAlignment(SwingConstants.CENTER);
+        lbl.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         return lbl;
     }
 }

@@ -74,4 +74,22 @@ public class SeguridadUtil {
     public static boolean passwordValida(String password) {
         return password != null && password.length() >= 6;
     }
+
+    // --------------------------------------------------------
+    // Valida que el teléfono ingresado sean exactamente 9 dígitos
+    // numéricos (sin código de país, sin espacios ni símbolos).
+    // Ejemplo válido: "987654321"
+    // --------------------------------------------------------
+    public static boolean telefonoValido(String telefono) {
+        return telefono != null && telefono.matches("^\\d{9}$");
+    }
+
+    // --------------------------------------------------------
+    // Normaliza un teléfono de 9 dígitos al formato con código
+    // de país de Perú: "+51" + 9 dígitos.
+    // Ejemplo: "987654321" → "+51987654321"
+    // --------------------------------------------------------
+    public static String normalizarTelefono(String telefono) {
+        return "+51" + telefono;
+    }
 }

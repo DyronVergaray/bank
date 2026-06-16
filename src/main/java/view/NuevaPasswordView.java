@@ -78,10 +78,12 @@ public class NuevaPasswordView extends JFrame {
         };
         barra.setPreferredSize(new Dimension(260, 0));
         barra.setLayout(new BoxLayout(barra, BoxLayout.Y_AXIS));
-        barra.setBorder(BorderFactory.createEmptyBorder(50, 30, 30, 30));
+        barra.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        JLabel lblIcono = new JLabel("🔓") {
-            { setFont(new Font("Segoe UI Emoji", Font.PLAIN, 60)); }
+        barra.add(Box.createVerticalGlue());
+
+        JLabel lblIcono = new JLabel("\u26BF") {
+            { setFont(new Font("Segoe UI Symbol", Font.PLAIN, 60)); }
         };
         lblIcono.setAlignmentX(Component.CENTER_ALIGNMENT);
         barra.add(lblIcono);
@@ -91,7 +93,9 @@ public class NuevaPasswordView extends JFrame {
         JLabel lblTitulo = new JLabel("Nueva Contraseña");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTitulo.setForeground(BLANCO);
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         lblTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblTitulo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         barra.add(lblTitulo);
 
         barra.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -100,15 +104,18 @@ public class NuevaPasswordView extends JFrame {
                 "<html><center>Identidad verificada.<br>Establezca su nueva contraseña.</center></html>");
         lblDesc.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblDesc.setForeground(new Color(255, 255, 255, 200));
+        lblDesc.setHorizontalAlignment(SwingConstants.CENTER);
         lblDesc.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblDesc.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        lblDesc.setPreferredSize(new Dimension(200, 40));
         barra.add(lblDesc);
 
         barra.add(Box.createVerticalGlue());
 
         // Pasos visuales del flujo
-        JLabel lblPaso1 = etiquetaPaso("✅  Datos verificados");
-        JLabel lblPaso2 = etiquetaPaso("✅  Código verificado");
-        JLabel lblPaso3 = etiquetaPaso("▶  Nueva contraseña");
+        JLabel lblPaso1 = etiquetaPaso("Datos verificados");
+        JLabel lblPaso2 = etiquetaPaso("Código verificado");
+        JLabel lblPaso3 = etiquetaPaso("Nueva contraseña");
         barra.add(lblPaso1);
         barra.add(Box.createRigidArea(new Dimension(0, 8)));
         barra.add(lblPaso2);
@@ -305,7 +312,9 @@ public class NuevaPasswordView extends JFrame {
         JLabel lbl = new JLabel(texto);
         lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lbl.setForeground(BLANCO);
-        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lbl.setHorizontalAlignment(SwingConstants.CENTER);
+        lbl.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         return lbl;
     }
 }

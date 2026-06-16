@@ -146,18 +146,21 @@ public class AutenticacionController {
             return "Ingrese su apellido paterno.";
         if (!SeguridadUtil.emailValido(email))
             return "El formato del correo no es válido.";
-        if (telefono == null || telefono.trim().isEmpty())
-            return "Ingrese su número de teléfono.";
+        if (!SeguridadUtil.telefonoValido(telefono != null ? telefono.trim() : null))
+            return "El teléfono debe tener exactamente 9 dígitos numéricos.";
         if (!SeguridadUtil.passwordValida(password))
             return "La contraseña debe tener al menos 6 caracteres.";
 
         // Hash de la contraseña antes de persistir
         String hashPwd = SeguridadUtil.hashSHA256(password);
 
+        // Normalizar teléfono al formato +51XXXXXXXXX
+        String telefonoNormalizado = SeguridadUtil.normalizarTelefono(telefono.trim());
+
         int resultado = usuarioDAO.crearUsuarioCliente(
                 primerNombre.trim(), apellidoPaterno.trim(),
                 (apellidoMaterno != null ? apellidoMaterno.trim() : ""),
-                email.trim(), telefono.trim(), hashPwd);
+                email.trim(), telefonoNormalizado, hashPwd);
 
         if (resultado > 0) return null;          // éxito
         if (resultado == -1) return "El correo electrónico ya está registrado.";
@@ -207,18 +210,21 @@ public class AutenticacionController {
             return "Ingrese el apellido paterno.";
         if (!SeguridadUtil.emailValido(email))
             return "El formato del correo no es válido.";
-        if (telefono == null || telefono.trim().isEmpty())
-            return "Ingrese el número de teléfono.";
+        if (!SeguridadUtil.telefonoValido(telefono != null ? telefono.trim() : null))
+            return "El teléfono debe tener exactamente 9 dígitos numéricos.";
         if (!SeguridadUtil.passwordValida(password))
             return "La contraseña debe tener al menos 6 caracteres.";
 
         // Hash de la contraseña antes de persistir
         String hashPwd = SeguridadUtil.hashSHA256(password);
 
+        // Normalizar teléfono al formato +51XXXXXXXXX
+        String telefonoNormalizado = SeguridadUtil.normalizarTelefono(telefono.trim());
+
         int resultado = usuarioDAO.crearUsuarioAdmin(
                 primerNombre.trim(), apellidoPaterno.trim(),
                 (apellidoMaterno != null ? apellidoMaterno.trim() : ""),
-                email.trim(), telefono.trim(), hashPwd);
+                email.trim(), telefonoNormalizado, hashPwd);
 
         if (resultado > 0) return null;
         if (resultado == -1) return "El correo electrónico ya está registrado.";
@@ -251,11 +257,14 @@ public class AutenticacionController {
             return "Ingrese su primer nombre.";
         if (apellidoPaterno == null || apellidoPaterno.trim().isEmpty())
             return "Ingrese su apellido paterno.";
-        if (telefono == null || telefono.trim().isEmpty())
-            return "Ingrese su número de teléfono.";
+        if (!SeguridadUtil.telefonoValido(telefono != null ? telefono.trim() : null))
+            return "El teléfono debe tener exactamente 9 dígitos numéricos.";
+
+        // Normalizar teléfono al formato +51XXXXXXXXX para comparar con BD
+        String telefonoNormalizado = SeguridadUtil.normalizarTelefono(telefono.trim());
 
         Usuario usuario = usuarioDAO.validarDatosRecuperacion(
-                email.trim(), primerNombre.trim(), apellidoPaterno.trim(), telefono.trim());
+                email.trim(), primerNombre.trim(), apellidoPaterno.trim(), telefonoNormalizado);
 
         if (usuario == null)
             return "Los datos ingresados no coinciden con ningún usuario registrado.";

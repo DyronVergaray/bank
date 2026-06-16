@@ -109,7 +109,10 @@ public class LoginView extends JFrame {
         JLabel lblSlogan = new JLabel("<html><center>Tu banco digital<br>inclusivo</center></html>");
         lblSlogan.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblSlogan.setForeground(new Color(255, 255, 255, 200));
+        lblSlogan.setHorizontalAlignment(SwingConstants.CENTER);
         lblSlogan.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblSlogan.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        lblSlogan.setPreferredSize(new Dimension(260, 40));
         barra.add(lblSlogan);
 
         barra.add(Box.createVerticalGlue());

@@ -85,10 +85,13 @@ public class RegistroView extends JFrame {
         };
         barra.setPreferredSize(new Dimension(260, 0));
         barra.setLayout(new BoxLayout(barra, BoxLayout.Y_AXIS));
-        barra.setBorder(BorderFactory.createEmptyBorder(50, 30, 30, 30));
+        barra.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        JLabel lblIcono = new JLabel("🏦");
-        lblIcono.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 60));
+        barra.add(Box.createVerticalGlue());
+
+        JLabel lblIcono = new JLabel("\u26BF") {
+            { setFont(new Font("Segoe UI Symbol", Font.PLAIN, 60)); }
+        };
         lblIcono.setAlignmentX(Component.CENTER_ALIGNMENT);
         barra.add(lblIcono);
 
@@ -97,7 +100,9 @@ public class RegistroView extends JFrame {
         JLabel lblNombre = new JLabel("Qori Bank");
         lblNombre.setFont(new Font("Segoe UI", Font.BOLD, 26));
         lblNombre.setForeground(BLANCO);
+        lblNombre.setHorizontalAlignment(SwingConstants.CENTER);
         lblNombre.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblNombre.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
         barra.add(lblNombre);
 
         barra.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -105,30 +110,37 @@ public class RegistroView extends JFrame {
         JLabel lblSub = new JLabel("<html><center>Crea tu cuenta<br>y empieza hoy</center></html>");
         lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblSub.setForeground(new Color(255, 255, 255, 200));
+        lblSub.setHorizontalAlignment(SwingConstants.CENTER);
         lblSub.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblSub.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        lblSub.setPreferredSize(new Dimension(200, 40));
         barra.add(lblSub);
 
         barra.add(Box.createVerticalGlue());
 
         // Pasos visuales
         for (String paso : new String[]{
-                "✅  Datos personales",
-                "✅  Credenciales de acceso",
-                "▶  Confirmar registro"}) {
+                "Datos personales",
+                "Credenciales de acceso",
+                "Confirmar registro"}) {
             JLabel lbl = new JLabel(paso);
             lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             lbl.setForeground(BLANCO);
-            lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+            lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+            lbl.setHorizontalAlignment(SwingConstants.CENTER);
+            lbl.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
             barra.add(lbl);
             barra.add(Box.createRigidArea(new Dimension(0, 8)));
         }
 
-        barra.add(Box.createRigidArea(new Dimension(0, 20)));
+        barra.add(Box.createRigidArea(new Dimension(0, 12)));
 
         JLabel lblPie = new JLabel("© 2026 Qori Bank");
         lblPie.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblPie.setForeground(new Color(255, 255, 255, 150));
+        lblPie.setHorizontalAlignment(SwingConstants.CENTER);
         lblPie.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblPie.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         barra.add(lblPie);
 
         return barra;
@@ -211,8 +223,9 @@ public class RegistroView extends JFrame {
 
         gbc.gridy  = 10;
         gbc.insets = new Insets(4, 0, 2, 0);
-        card.add(crearLabel("Teléfono * (con código de país)"), gbc);
-        txtTelefono = crearCampo("Ej: +51987654321");
+        card.add(crearLabel("Teléfono * (9 dígitos, sin +51)"), gbc);
+        txtTelefono = crearCampo("Ej: 987654321");
+        aplicarFiltroTelefono(txtTelefono);
         gbc.gridy  = 11;
         gbc.insets = new Insets(0, 0, 8, 0);
         card.add(txtTelefono, gbc);
@@ -344,6 +357,26 @@ public class RegistroView extends JFrame {
     // --------------------------------------------------------
     // Helpers de UI
     // --------------------------------------------------------
+
+    /**
+     * Restringe un campo de texto para que solo acepte dígitos
+     * y un máximo de 9 caracteres (formato de teléfono sin +51).
+     */
+    private void aplicarFiltroTelefono(JTextField campo) {
+        campo.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                char c = e.getKeyChar();
+                if (!Character.isDigit(c) && c != KeyEvent.VK_BACK_SPACE) {
+                    e.consume();
+                }
+                if (campo.getText().length() >= 9 && c != KeyEvent.VK_BACK_SPACE) {
+                    e.consume();
+                }
+            }
+        });
+    }
+
     private JLabel crearLabel(String texto) {
         JLabel lbl = new JLabel(texto);
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));

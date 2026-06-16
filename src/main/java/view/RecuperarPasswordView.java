@@ -85,10 +85,13 @@ public class RecuperarPasswordView extends JFrame {
         };
         barra.setPreferredSize(new Dimension(260, 0));
         barra.setLayout(new BoxLayout(barra, BoxLayout.Y_AXIS));
-        barra.setBorder(BorderFactory.createEmptyBorder(50, 30, 30, 30));
+        barra.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        JLabel lblIcono = new JLabel("🔑") {
-            { setFont(new Font("Segoe UI Emoji", Font.PLAIN, 60)); }
+        // Glue superior: centra verticalmente el bloque ícono/título/descripción
+        barra.add(Box.createVerticalGlue());
+
+        JLabel lblIcono = new JLabel("\u26BF") {
+            { setFont(new Font("Segoe UI Symbol", Font.PLAIN, 60)); }
         };
         lblIcono.setAlignmentX(Component.CENTER_ALIGNMENT);
         barra.add(lblIcono);
@@ -98,7 +101,9 @@ public class RecuperarPasswordView extends JFrame {
         JLabel lblTitulo = new JLabel("Recuperar Acceso");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTitulo.setForeground(BLANCO);
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         lblTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblTitulo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         barra.add(lblTitulo);
 
         barra.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -107,15 +112,19 @@ public class RecuperarPasswordView extends JFrame {
                 "<html><center>Verifique su identidad<br>para restablecer su contraseña</center></html>");
         lblDesc.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblDesc.setForeground(new Color(255, 255, 255, 200));
+        lblDesc.setHorizontalAlignment(SwingConstants.CENTER);
         lblDesc.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblDesc.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        lblDesc.setPreferredSize(new Dimension(200, 40));
         barra.add(lblDesc);
 
+        // Glue inferior: separa el bloque superior de los pasos
         barra.add(Box.createVerticalGlue());
 
         // Pasos visuales del flujo
-        JLabel lblPaso1 = etiquetaPaso("▶  Verificar identidad");
-        JLabel lblPaso2 = etiquetaPasoGris("○  Ingresar código");
-        JLabel lblPaso3 = etiquetaPasoGris("○  Nueva contraseña");
+        JLabel lblPaso1 = etiquetaPaso("Verificar identidad");
+        JLabel lblPaso2 = etiquetaPasoGris("Ingresar código");
+        JLabel lblPaso3 = etiquetaPasoGris("Nueva contraseña");
         barra.add(lblPaso1);
         barra.add(Box.createRigidArea(new Dimension(0, 8)));
         barra.add(lblPaso2);
@@ -199,8 +208,9 @@ public class RecuperarPasswordView extends JFrame {
         // Teléfono
         gbc.gridy  = 8;
         gbc.insets = new Insets(0, 0, 2, 0);
-        card.add(crearLabel("Teléfono"), gbc);
-        txtTelefono = crearCampo("Ej: +51987654321");
+        card.add(crearLabel("Teléfono (9 dígitos, sin +51)"), gbc);
+        txtTelefono = crearCampo("Ej: 987654321");
+        aplicarFiltroTelefono(txtTelefono);
         gbc.gridy  = 9;
         gbc.insets = new Insets(0, 0, 12, 0);
         card.add(txtTelefono, gbc);
@@ -308,6 +318,26 @@ public class RecuperarPasswordView extends JFrame {
     // --------------------------------------------------------
     // Helpers de UI
     // --------------------------------------------------------
+
+    /**
+     * Restringe un campo de texto para que solo acepte dígitos
+     * y un máximo de 9 caracteres (formato de teléfono sin +51).
+     */
+    private void aplicarFiltroTelefono(JTextField campo) {
+        campo.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                char c = e.getKeyChar();
+                if (!Character.isDigit(c) && c != KeyEvent.VK_BACK_SPACE) {
+                    e.consume();
+                }
+                if (campo.getText().length() >= 9 && c != KeyEvent.VK_BACK_SPACE) {
+                    e.consume();
+                }
+            }
+        });
+    }
+
     private JLabel crearLabel(String texto) {
         JLabel lbl = new JLabel(texto);
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -383,7 +413,9 @@ public class RecuperarPasswordView extends JFrame {
         JLabel lbl = new JLabel(texto);
         lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lbl.setForeground(BLANCO);
-        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lbl.setHorizontalAlignment(SwingConstants.CENTER);
+        lbl.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         return lbl;
     }
 
@@ -391,7 +423,9 @@ public class RecuperarPasswordView extends JFrame {
         JLabel lbl = new JLabel(texto);
         lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lbl.setForeground(new Color(255, 255, 255, 120));
-        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lbl.setHorizontalAlignment(SwingConstants.CENTER);
+        lbl.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         return lbl;
     }
 }
