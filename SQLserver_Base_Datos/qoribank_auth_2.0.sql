@@ -62,12 +62,20 @@ CREATE TABLE dbo.Inicio_Sesion (
     codigo_hash         VARCHAR(255),
     codigo_verificado   BIT NOT NULL DEFAULT 0,
     codigo_expira_en    DATETIME,
-    token_sesion        VARCHAR(255) CONSTRAINT UQ_Inicio_Sesion_token UNIQUE,
+    token_sesion        VARCHAR(255),
     sesion_expira_en    DATETIME,
     creado_en           DATETIME NOT NULL DEFAULT GETDATE(),
     CONSTRAINT FK_IS_Usuario FOREIGN KEY (id_usuario) REFERENCES dbo.Usuario(id_usuario),
     CONSTRAINT FK_IS_Tipo    FOREIGN KEY (id_tipo)    REFERENCES dbo.Tipo_Verificacion(id_tipo)
 );
+GO
+
+-- Índice único filtrado: garantiza que los tokens reales (no nulos)
+-- sean únicos, pero permite múltiples filas con token_sesion = NULL
+-- (sesiones pendientes que aún no han sido verificadas).
+CREATE UNIQUE INDEX UQ_Inicio_Sesion_token
+    ON dbo.Inicio_Sesion(token_sesion)
+    WHERE token_sesion IS NOT NULL;
 GO
 
 -- ============================================================
