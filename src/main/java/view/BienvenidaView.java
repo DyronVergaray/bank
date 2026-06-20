@@ -118,16 +118,32 @@ public class BienvenidaView extends JFrame {
         barra.add(Box.createVerticalGlue());
 
         // Módulos del menú
-        String[] modulos = {"🏠  Inicio", "💳  Mis Cuentas",
-                            "↗️  Transferencias", "🔔  Notificaciones"};
-        for (String mod : modulos) {
-            JLabel lbl = new JLabel(mod);
-            lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-            lbl.setForeground(new Color(255, 255, 255, 180));
-            lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
-            barra.add(lbl);
+        String[] modulosEstaticos = {"🏠  Inicio", "↗️  Transferencias", "🔔  Notificaciones"};
+
+        JLabel lblInicio = crearItemMenu(modulosEstaticos[0]);
+        barra.add(lblInicio);
+        barra.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // "Mis Cuentas" es clickeable solo para CLIENTE (no ADMIN)
+        if (!usuario.esAdmin()) {
+            JButton btnMisCuentas = crearBotonBarra("💳  Mis Cuentas", new Color(0x6C5CE7));
+            btnMisCuentas.addActionListener(e -> abrirMisCuentas());
+            btnMisCuentas.setAlignmentX(Component.CENTER_ALIGNMENT);
+            barra.add(btnMisCuentas);
+            barra.add(Box.createRigidArea(new Dimension(0, 8)));
+        } else {
+            JLabel lblMisCuentas = crearItemMenu("💳  Mis Cuentas");
+            barra.add(lblMisCuentas);
             barra.add(Box.createRigidArea(new Dimension(0, 10)));
         }
+
+        JLabel lblTransferencias = crearItemMenu(modulosEstaticos[1]);
+        barra.add(lblTransferencias);
+        barra.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        JLabel lblNotificaciones = crearItemMenu(modulosEstaticos[2]);
+        barra.add(lblNotificaciones);
+        barra.add(Box.createRigidArea(new Dimension(0, 10)));
 
         barra.add(Box.createRigidArea(new Dimension(0, 6)));
 
@@ -301,6 +317,14 @@ public class BienvenidaView extends JFrame {
     }
 
     // --------------------------------------------------------
+    // Evento: abrir "Mis Cuentas" (solo CLIENTE)
+    // --------------------------------------------------------
+    private void abrirMisCuentas() {
+        new MisCuentasView(controller).setVisible(true);
+        this.setVisible(false);
+    }
+
+    // --------------------------------------------------------
     // Cerrar sesión
     // --------------------------------------------------------
     private void cerrarSesion() {
@@ -411,5 +435,13 @@ public class BienvenidaView extends JFrame {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return btn;
+    }
+
+    private JLabel crearItemMenu(String texto) {
+        JLabel lbl = new JLabel(texto);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lbl.setForeground(new Color(255, 255, 255, 180));
+        lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        return lbl;
     }
 }

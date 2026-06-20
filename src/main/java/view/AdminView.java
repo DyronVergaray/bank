@@ -133,6 +133,12 @@ public class AdminView extends JFrame {
             this.dispose();
         });
 
+        JButton btnBancos = crearBotonBarra("Bancos", BLANCO, new Color(0x6C5CE7));
+        btnBancos.addActionListener(e -> {
+            new TiposCuentaAdminView(this).setVisible(true);
+            this.setVisible(false);
+        });
+
         JButton btnCerrar = crearBotonBarra("Cerrar Sesión", BLANCO, DORADO_OSCURO);
         btnCerrar.addActionListener(e -> {
             controller.cerrarSesion();
@@ -141,6 +147,7 @@ public class AdminView extends JFrame {
         });
 
         der.add(btnVolver);
+        der.add(btnBancos);
         der.add(btnCerrar);
         barra.add(der, BorderLayout.EAST);
 

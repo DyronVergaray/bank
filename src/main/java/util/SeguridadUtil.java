@@ -92,4 +92,45 @@ public class SeguridadUtil {
     public static String normalizarTelefono(String telefono) {
         return "+51" + telefono;
     }
+
+    // --------------------------------------------------------
+    // Valida que el número de tarjeta tenga exactamente 16
+    // dígitos numéricos (sin espacios ni guiones).
+    // --------------------------------------------------------
+    public static boolean numeroTarjetaValido(String numeroTarjeta) {
+        return numeroTarjeta != null && numeroTarjeta.matches("^\\d{16}$");
+    }
+
+    // --------------------------------------------------------
+    // Valida el formato de fecha de vencimiento MM/AAAA y que
+    // no esté ya vencida respecto a la fecha actual.
+    // --------------------------------------------------------
+    public static boolean fechaVencimientoValida(String mmAAAA) {
+        if (mmAAAA == null || !mmAAAA.matches("^(0[1-9]|1[0-2])/\\d{4}$")) {
+            return false;
+        }
+        int mes  = Integer.parseInt(mmAAAA.substring(0, 2));
+        int anio = Integer.parseInt(mmAAAA.substring(3));
+
+        java.time.YearMonth vencimiento = java.time.YearMonth.of(anio, mes);
+        java.time.YearMonth actual      = java.time.YearMonth.now();
+        return !vencimiento.isBefore(actual);
+    }
+
+    // --------------------------------------------------------
+    // Valida que el CVV tenga 3 o 4 dígitos numéricos.
+    // --------------------------------------------------------
+    public static boolean cvvValido(String cvv) {
+        return cvv != null && cvv.matches("^\\d{3,4}$");
+    }
+
+    // --------------------------------------------------------
+    // Enmascara un número de tarjeta de 16 dígitos, mostrando
+    // solo los últimos 4. Ejemplo: "**** **** **** 4321"
+    // --------------------------------------------------------
+    public static String enmascararTarjeta(String numeroTarjeta) {
+        if (numeroTarjeta == null || numeroTarjeta.length() < 4) return "**** **** **** ****";
+        String ultimos4 = numeroTarjeta.substring(numeroTarjeta.length() - 4);
+        return "**** **** **** " + ultimos4;
+    }
 }
