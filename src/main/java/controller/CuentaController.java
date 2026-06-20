@@ -68,10 +68,12 @@ public class CuentaController {
      * @param numeroTarjeta     16 dígitos en texto plano
      * @param fechaVencimiento  Formato MM/AAAA
      * @param cvv               3 o 4 dígitos en texto plano
+     * @param saldoActual       Saldo actual declarado por el usuario para esa tarjeta
      * Retorna null si fue exitoso, o un mensaje de error.
      */
     public String registrarCuenta(int idTipoCuenta, String numeroTarjeta,
-                                  String fechaVencimiento, String cvv) {
+                                  String fechaVencimiento, String cvv,
+                                  java.math.BigDecimal saldoActual) {
 
         if (usuarioActual == null)
             return "Debe iniciar sesión para registrar una cuenta bancaria.";
@@ -83,6 +85,8 @@ public class CuentaController {
             return "La fecha de vencimiento no es válida o ya expiró (formato MM/AAAA).";
         if (!SeguridadUtil.cvvValido(cvv))
             return "El CVV debe tener 3 o 4 dígitos.";
+        if (saldoActual == null || saldoActual.signum() < 0)
+            return "Ingrese un saldo válido (no puede ser negativo).";
 
         // PATRÓN FACTORY + ADAPTER: validar la tarjeta ante la "API" del
         // banco correspondiente, usando los datos en claro mientras aún
@@ -108,7 +112,7 @@ public class CuentaController {
 
         int idCuenta = cuentaDAO.registrarCuentaBancaria(
                 usuarioActual.getIdUsuario(), idTipoCuenta,
-                tarjetaHash, enmascarado, fechaVencimiento, cvvHash);
+                tarjetaHash, enmascarado, fechaVencimiento, cvvHash, saldoActual);
 
         if (idCuenta == -1)
             return "Esta tarjeta ya se encuentra registrada en el sistema.";
@@ -119,6 +123,7 @@ public class CuentaController {
         cuentaPendiente = new CuentaBancaria(usuarioActual.getIdUsuario(), idTipoCuenta,
                 tarjetaHash, enmascarado, fechaVencimiento, cvvHash);
         cuentaPendiente.setIdCuentaBancaria(idCuenta);
+        cuentaPendiente.setSaldo(saldoActual);
 
         return null;
     }

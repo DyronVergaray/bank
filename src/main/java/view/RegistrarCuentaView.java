@@ -44,6 +44,7 @@ public class RegistrarCuentaView extends JFrame {
     private JTextField   txtNumeroTarjeta;
     private JTextField   txtVencimiento;
     private JPasswordField txtCvv;
+    private JTextField   txtSaldoActual;
     private JRadioButton rbSMS;
     private JRadioButton rbCorreo;
     private JLabel        lblError;
@@ -58,7 +59,7 @@ public class RegistrarCuentaView extends JFrame {
     private void initUI() {
         setTitle("Qori Bank — Vincular Cuenta Bancaria");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 660);
+        setSize(900, 720);
         setLocationRelativeTo(null);
         setResizable(false);
 
@@ -154,7 +155,7 @@ public class RegistrarCuentaView extends JFrame {
         };
         card.setLayout(new GridBagLayout());
         card.setOpaque(false);
-        card.setPreferredSize(new Dimension(440, 580));
+        card.setPreferredSize(new Dimension(440, 650));
         card.setBorder(BorderFactory.createEmptyBorder(28, 40, 28, 40));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -222,11 +223,21 @@ public class RegistrarCuentaView extends JFrame {
         filaVencCvv.add(colCvv);
 
         gbc.gridy  = 5;
-        gbc.insets = new Insets(0, 0, 12, 0);
+        gbc.insets = new Insets(0, 0, 10, 0);
         card.add(filaVencCvv, gbc);
 
-        // Canal de verificación
+        // Saldo actual de la tarjeta
         gbc.gridy  = 6;
+        gbc.insets = new Insets(0, 0, 2, 0);
+        card.add(crearLabel("Saldo actual (S/)"), gbc);
+        txtSaldoActual = crearCampo("0.00");
+        aplicarFiltroDecimal(txtSaldoActual);
+        gbc.gridy  = 7;
+        gbc.insets = new Insets(0, 0, 12, 0);
+        card.add(txtSaldoActual, gbc);
+
+        // Canal de verificación
+        gbc.gridy  = 8;
         gbc.insets = new Insets(0, 0, 4, 0);
         card.add(crearLabel("Verificar propiedad de la tarjeta por:"), gbc);
 
@@ -242,7 +253,7 @@ public class RegistrarCuentaView extends JFrame {
         panelCanal.add(rbSMS);
         panelCanal.add(Box.createRigidArea(new Dimension(20, 0)));
         panelCanal.add(rbCorreo);
-        gbc.gridy  = 7;
+        gbc.gridy  = 9;
         gbc.insets = new Insets(2, 0, 12, 0);
         card.add(panelCanal, gbc);
 
@@ -251,14 +262,14 @@ public class RegistrarCuentaView extends JFrame {
         lblError.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblError.setForeground(ROJO_ERROR);
         lblError.setHorizontalAlignment(SwingConstants.CENTER);
-        gbc.gridy  = 8;
+        gbc.gridy  = 10;
         gbc.insets = new Insets(0, 0, 4, 0);
         card.add(lblError, gbc);
 
         // Botón continuar
         JButton btnContinuar = crearBotonPrincipal("Continuar");
         btnContinuar.addActionListener(e -> procesarRegistro());
-        gbc.gridy  = 9;
+        gbc.gridy  = 11;
         gbc.insets = new Insets(4, 0, 8, 0);
         card.add(btnContinuar, gbc);
 
@@ -271,7 +282,7 @@ public class RegistrarCuentaView extends JFrame {
         btnVolver.setFocusPainted(false);
         btnVolver.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnVolver.addActionListener(e -> volverAMisCuentas());
-        gbc.gridy  = 10;
+        gbc.gridy  = 12;
         gbc.insets = new Insets(0, 0, 0, 0);
         card.add(btnVolver, gbc);
 
@@ -315,9 +326,18 @@ public class RegistrarCuentaView extends JFrame {
         String numeroTarjeta = txtNumeroTarjeta.getText().trim();
         String vencimiento    = txtVencimiento.getText().trim();
         String cvv            = new String(txtCvv.getPassword());
+        String saldoTexto     = txtSaldoActual.getText().trim();
+
+        java.math.BigDecimal saldoActual;
+        try {
+            saldoActual = new java.math.BigDecimal(saldoTexto.isEmpty() ? "0" : saldoTexto);
+        } catch (NumberFormatException ex) {
+            lblError.setText("Ingrese un saldo válido (ej: 1500.50).");
+            return;
+        }
 
         String errorRegistro = cuentaController.registrarCuenta(
-                bancoSeleccionado.getIdTipoCuenta(), numeroTarjeta, vencimiento, cvv);
+                bancoSeleccionado.getIdTipoCuenta(), numeroTarjeta, vencimiento, cvv, saldoActual);
 
         if (errorRegistro != null) {
             lblError.setText(errorRegistro);
@@ -360,6 +380,27 @@ public class RegistrarCuentaView extends JFrame {
                     e.consume();
                 }
                 if (campo.getText().length() >= maxLen && c != KeyEvent.VK_BACK_SPACE) {
+                    e.consume();
+                }
+            }
+        });
+    }
+
+    /**
+     * Restringe un campo de texto para que solo acepte números
+     * decimales positivos (dígitos y un único punto decimal),
+     * usado para el campo de saldo actual de la tarjeta.
+     */
+    private void aplicarFiltroDecimal(JTextField campo) {
+        campo.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                char c = e.getKeyChar();
+                boolean esDigito = Character.isDigit(c);
+                boolean esPunto  = c == '.' && !campo.getText().contains(".");
+                boolean esBorrar = c == KeyEvent.VK_BACK_SPACE;
+
+                if (!esDigito && !esPunto && !esBorrar) {
                     e.consume();
                 }
             }

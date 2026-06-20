@@ -57,16 +57,18 @@ public class CuentaBancariaDAO {
     // --------------------------------------------------------
     public int registrarCuentaBancaria(int idUsuario, int idTipoCuenta,
                                        String numeroTarjetaHash, String numeroTarjetaEnmascarado,
-                                       String fechaVencimiento, String cvvHash) {
-        String sql = "{CALL sp_RegistrarCuentaBancaria(?, ?, ?, ?, ?, ?)}";
+                                       String fechaVencimiento, String cvvHash,
+                                       BigDecimal saldoInicial) {
+        String sql = "{CALL sp_RegistrarCuentaBancaria(?, ?, ?, ?, ?, ?, ?)}";
 
         try (CallableStatement cs = getConexion().prepareCall(sql)) {
-            cs.setInt   (1, idUsuario);
-            cs.setInt   (2, idTipoCuenta);
-            cs.setString(3, numeroTarjetaHash);
-            cs.setString(4, numeroTarjetaEnmascarado);
-            cs.setString(5, fechaVencimiento);
-            cs.setString(6, cvvHash);
+            cs.setInt       (1, idUsuario);
+            cs.setInt       (2, idTipoCuenta);
+            cs.setString    (3, numeroTarjetaHash);
+            cs.setString    (4, numeroTarjetaEnmascarado);
+            cs.setString    (5, fechaVencimiento);
+            cs.setString    (6, cvvHash);
+            cs.setBigDecimal(7, saldoInicial);
 
             try (ResultSet rs = cs.executeQuery()) {
                 if (rs.next()) {

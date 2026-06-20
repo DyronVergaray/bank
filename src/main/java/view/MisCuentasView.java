@@ -186,10 +186,10 @@ public class MisCuentasView extends JFrame {
         card.setOpaque(false);
         card.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
-        card.setPreferredSize(new Dimension(700, 90));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        card.setPreferredSize(new Dimension(700, 110));
 
-        // Izquierda: entidad + número enmascarado
+        // Izquierda: entidad + número enmascarado + saldo
         JPanel info = new JPanel();
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
         info.setOpaque(false);
@@ -203,9 +203,15 @@ public class MisCuentasView extends JFrame {
         lblNumero.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblNumero.setForeground(Color.GRAY);
 
+        JLabel lblSaldo = new JLabel("Saldo: S/ " + String.format("%,.2f", c.getSaldo()));
+        lblSaldo.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblSaldo.setForeground(new Color(0x27AE60));
+
         info.add(lblEntidad);
         info.add(Box.createRigidArea(new Dimension(0, 4)));
         info.add(lblNumero);
+        info.add(Box.createRigidArea(new Dimension(0, 4)));
+        info.add(lblSaldo);
         card.add(info, BorderLayout.WEST);
 
         // Derecha: badge de estado
@@ -269,10 +275,10 @@ public class MisCuentasView extends JFrame {
     private JButton crearBotonBarra(String texto) {
         JButton btn = new JButton(texto);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btn.setForeground(BLANCO);
-        btn.setBackground(DORADO_PRINCIPAL);
+        btn.setForeground(DORADO_OSCURO);
+        btn.setBackground(BLANCO);
         btn.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BLANCO, 1, true),
+                new LineBorder(DORADO_OSCURO, 1, true),
                 BorderFactory.createEmptyBorder(5, 14, 5, 14)));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setFocusPainted(false);

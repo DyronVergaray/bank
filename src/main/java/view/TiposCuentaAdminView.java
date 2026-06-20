@@ -528,10 +528,10 @@ public class TiposCuentaAdminView extends JFrame {
     private JButton crearBotonBarra(String texto) {
         JButton btn = new JButton(texto);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btn.setForeground(BLANCO);
-        btn.setBackground(MORADO_CUENTAS);
+        btn.setForeground(MORADO_CUENTAS);
+        btn.setBackground(BLANCO);
         btn.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BLANCO, 1, true),
+                new LineBorder(MORADO_CUENTAS, 1, true),
                 BorderFactory.createEmptyBorder(5, 14, 5, 14)));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setFocusPainted(false);
