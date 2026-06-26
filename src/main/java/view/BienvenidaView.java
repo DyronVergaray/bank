@@ -118,9 +118,7 @@ public class BienvenidaView extends JFrame {
         barra.add(Box.createVerticalGlue());
 
         // Módulos del menú
-        String[] modulosEstaticos = {"🏠  Inicio", "↗️  Transferencias", "🔔  Notificaciones"};
-
-        JLabel lblInicio = crearItemMenu(modulosEstaticos[0]);
+        JLabel lblInicio = crearItemMenu("🏠  Inicio");
         barra.add(lblInicio);
         barra.add(Box.createRigidArea(new Dimension(0, 10)));
 
@@ -137,11 +135,20 @@ public class BienvenidaView extends JFrame {
             barra.add(Box.createRigidArea(new Dimension(0, 10)));
         }
 
-        JLabel lblTransferencias = crearItemMenu(modulosEstaticos[1]);
-        barra.add(lblTransferencias);
-        barra.add(Box.createRigidArea(new Dimension(0, 10)));
+        // "Transferencias" es clickeable solo para CLIENTE (no ADMIN)
+        if (!usuario.esAdmin()) {
+            JButton btnTransferencias = crearBotonBarra("↗  Transferencias", new Color(0x00897B));
+            btnTransferencias.addActionListener(e -> abrirTransferencias());
+            btnTransferencias.setAlignmentX(Component.CENTER_ALIGNMENT);
+            barra.add(btnTransferencias);
+            barra.add(Box.createRigidArea(new Dimension(0, 8)));
+        } else {
+            JLabel lblTransferencias = crearItemMenu("↗  Transferencias");
+            barra.add(lblTransferencias);
+            barra.add(Box.createRigidArea(new Dimension(0, 10)));
+        }
 
-        JLabel lblNotificaciones = crearItemMenu(modulosEstaticos[2]);
+        JLabel lblNotificaciones = crearItemMenu("🔔  Notificaciones");
         barra.add(lblNotificaciones);
         barra.add(Box.createRigidArea(new Dimension(0, 10)));
 
@@ -321,6 +328,14 @@ public class BienvenidaView extends JFrame {
     // --------------------------------------------------------
     private void abrirMisCuentas() {
         new MisCuentasView(controller).setVisible(true);
+        this.setVisible(false);
+    }
+
+    // --------------------------------------------------------
+    // Evento: abrir "Transferencias" (solo CLIENTE)
+    // --------------------------------------------------------
+    private void abrirTransferencias() {
+        new TransferenciasView(controller).setVisible(true);
         this.setVisible(false);
     }
 
