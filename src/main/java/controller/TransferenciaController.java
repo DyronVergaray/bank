@@ -33,6 +33,9 @@ public class TransferenciaController {
     private int           idSesionTransferencia;
     private String        codigoGenerado;
 
+    // Módulo 6: indica si la transferencia requiere alerta de seguridad
+    private boolean requiereConfirmacionAlerta = false;
+
     public TransferenciaController(Usuario usuarioActual) {
         this.usuarioActual    = usuarioActual;
         this.transferenciaDAO = new TransferenciaDAO();
@@ -123,6 +126,19 @@ public class TransferenciaController {
 
         t.setIdTransferencia(idTransferencia);
         this.transferenciaActual = t;
+
+        // MÓDULO 6 — ALERTA DE SEGURIDAD: si el monto >= S/500,
+        // crear alerta y mantener la transferencia en PENDIENTE.
+        // La vista (TransferenciasView) detectará esto y redirigirá
+        // al flujo de confirmación en NotificacionesView.
+        NotificacionController notifCtrl = new NotificacionController(usuarioActual);
+        if (notifCtrl.requiereAlerta(monto)) {
+            int idAlerta = notifCtrl.crearAlertaSeguridad(t);
+            System.out.println("[TransferenciaController] Alerta de seguridad creada "
+                    + "(id=" + idAlerta + ") — monto=" + monto);
+            // Señalizar a la vista que hay alerta pendiente
+            this.requiereConfirmacionAlerta = true;
+        }
 
         return null;
     }
@@ -224,13 +240,28 @@ public class TransferenciaController {
     // GETTERS DE ESTADO
     // ============================================================
 
-    public Transferencia getTransferenciaActual()       { return transferenciaActual; }
-    public String        getCodigoGeneradoSimulacion()  { return codigoGenerado; }
+    public Transferencia getTransferenciaActual()         { return transferenciaActual; }
+    public String        getCodigoGeneradoSimulacion()    { return codigoGenerado; }
+    public boolean       requiereConfirmacionAlerta()     { return requiereConfirmacionAlerta; }
 
     /** Limpia el estado en memoria (cancelar o tras completar). */
     public void limpiarEstado() {
-        transferenciaActual   = null;
-        idSesionTransferencia = -1;
-        codigoGenerado        = null;
+        transferenciaActual          = null;
+        idSesionTransferencia        = -1;
+        codigoGenerado               = null;
+        requiereConfirmacionAlerta   = false;
+    }
+
+    /**
+     * Llamado por VerificacionTransferenciaView tras procesamiento exitoso
+     * para disparar las notificaciones de transferencia efectuada/recibida.
+     */
+    public void notificarResultado(Transferencia t) {
+        NotificacionController notifCtrl = new NotificacionController(usuarioActual);
+        // Notificar al remitente
+        notifCtrl.notificarTransferenciaEfectuada(t);
+        // Notificar al destinatario si es usuario interno (best-effort)
+        // En producción: consultar si la tarjeta destino tiene dueño en el sistema
+        System.out.println("[TransferenciaController] Notificaciones de transferencia disparadas.");
     }
 }

@@ -123,6 +123,15 @@ public class AutenticacionController {
         }
 
         sesionActual.verificar(tokenSesion, java.time.LocalDateTime.now().plusHours(1));
+
+        // PATRÓN OBSERVER (Módulo 6): notificar inicio de sesión exitoso
+        try {
+            NotificacionController notifCtrl = new NotificacionController(usuarioActual);
+            notifCtrl.notificarInicioSesion();
+        } catch (Exception e) {
+            System.err.println("[AutenticacionController] Aviso: no se pudo crear notificación de sesión: " + e.getMessage());
+        }
+
         return null;
     }
 

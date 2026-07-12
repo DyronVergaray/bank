@@ -275,8 +275,10 @@ public class VerificacionTransferenciaView extends JFrame {
             return;
         }
 
-        // Transferencia exitosa
+        // Transferencia exitosa — disparar notificaciones (Módulo 6)
         Transferencia t = transController.getTransferenciaActual();
+        transController.notificarResultado(t);
+
         JOptionPane.showMessageDialog(this,
                 "<html><b>Transferencia exitosa</b><br>" +
                 "Monto: S/ " + String.format("%,.2f", t.getMonto()) + "<br>" +

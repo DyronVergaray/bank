@@ -1,7 +1,10 @@
 package view;
 
 import controller.AutenticacionController;
+import controller.NotificacionController;
 import controller.TransferenciaController;
+import model.InicioSesion;
+import model.Notificacion;
 import model.Transferencia;
 import model.Usuario;
 
@@ -129,7 +132,7 @@ public class HistorialTransferenciasView extends JFrame {
 
         String[] columnas = {
             "Fecha", "Tipo", "Tarjeta Origen", "Tarjeta Destino",
-            "Entidad Destino", "Monto (S/)", "Estado", "Comprobante"
+            "Entidad Destino", "Monto (S/)", "Estado", "Acción"
         };
         modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -166,7 +169,10 @@ public class HistorialTransferenciasView extends JFrame {
             @Override public void mouseClicked(java.awt.event.MouseEvent e) {
                 int f = tabla.rowAtPoint(e.getPoint());
                 int c = tabla.columnAtPoint(e.getPoint());
-                if (f >= 0 && c == 7) descargarComprobante(f);
+                if (f < 0 || c != 7) return;
+                String accion = (String) modeloTabla.getValueAt(f, 7);
+                if ("Descargar".equals(accion))  descargarComprobante(f);
+                if ("Confirmar".equals(accion))  confirmarTransferencia(f);
             }
         });
 
@@ -179,7 +185,7 @@ public class HistorialTransferenciasView extends JFrame {
         for (int i : new int[]{0,1,2,3,4}) tabla.getColumnModel().getColumn(i).setCellRenderer(new HoverRenderer(SwingConstants.LEFT));
         tabla.getColumnModel().getColumn(5).setCellRenderer(new HoverRenderer(SwingConstants.RIGHT));
         tabla.getColumnModel().getColumn(6).setCellRenderer(new EstadoRenderer());
-        tabla.getColumnModel().getColumn(7).setCellRenderer(new ComprobanteRenderer());
+        tabla.getColumnModel().getColumn(7).setCellRenderer(new AccionRenderer());
 
         JScrollPane scroll = new JScrollPane(tabla);
         scroll.setBorder(BorderFactory.createLineBorder(new Color(0xDDDDDD)));
@@ -206,16 +212,17 @@ public class HistorialTransferenciasView extends JFrame {
         modeloTabla.setRowCount(0);
         transferencias = transController.obtenerHistorial();
 
-        if (transferencias.isEmpty()) {
-            JLabel lbl = new JLabel("Aún no tienes transferencias realizadas.");
-            // Solo mostramos como fila vacía
-            return;
-        }
+        if (transferencias.isEmpty()) return;
 
         for (Transferencia t : transferencias) {
-            String fecha = t.getCreadoEn() != null ? t.getCreadoEn().format(FMT) : "-";
-            String tipo  = t.getTipo() != null ? t.getTipo().name().replace("_", " ") : "-";
-            boolean exitosa = t.getEstado() == Transferencia.EstadoTransferencia.EXITOSA;
+            String fecha    = t.getCreadoEn() != null ? t.getCreadoEn().format(FMT) : "-";
+            String tipo     = t.getTipo() != null ? t.getTipo().name().replace("_", " ") : "-";
+            boolean exitosa   = t.getEstado() == Transferencia.EstadoTransferencia.EXITOSA;
+            boolean pendiente = t.getEstado() == Transferencia.EstadoTransferencia.PENDIENTE;
+
+            String accion = exitosa   ? "Descargar"
+                          : pendiente ? "Confirmar"
+                          : "-";
 
             modeloTabla.addRow(new Object[]{
                 fecha,
@@ -225,7 +232,7 @@ public class HistorialTransferenciasView extends JFrame {
                 t.getEntidadDestino(),
                 String.format("%,.2f", t.getMonto()),
                 t.getEstado().name(),
-                exitosa ? "Descargar" : "-"
+                accion
             });
         }
     }
@@ -292,6 +299,111 @@ public class HistorialTransferenciasView extends JFrame {
         }
     }
 
+    // --------------------------------------------------------
+    // Confirmar transferencia pendiente (alerta de seguridad)
+    // --------------------------------------------------------
+    private void confirmarTransferencia(int fila) {
+        if (transferencias == null || fila >= transferencias.size()) return;
+        Transferencia t = transferencias.get(fila);
+
+        if (t.getEstado() != Transferencia.EstadoTransferencia.PENDIENTE) {
+            JOptionPane.showMessageDialog(this,
+                    "Solo se pueden confirmar transferencias en estado PENDIENTE.",
+                    "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Elegir canal para el OTP
+        String[] opciones = {"SMS", "Correo electrónico"};
+        int opCanal = JOptionPane.showOptionDialog(this,
+                "¿Por qué canal desea recibir el código de confirmación?",
+                "Confirmar transferencia de S/ " + String.format("%,.2f", t.getMonto()),
+                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
+                null, opciones, opciones[0]);
+        if (opCanal < 0) return;
+
+        InicioSesion.CanalVerificacion canal = (opCanal == 0)
+                ? InicioSesion.CanalVerificacion.SMS
+                : InicioSesion.CanalVerificacion.CORREO;
+
+        // Enviar código OTP para la alerta
+        NotificacionController notifCtrl =
+                new NotificacionController(authController.getUsuarioActual());
+
+        // Obtener la notificación de alerta vinculada a esta transferencia
+        java.util.List<model.Notificacion> notifs = notifCtrl.obtenerNotificaciones();
+        model.Notificacion alerta = notifs.stream()
+                .filter(n -> n.getTipo() == model.Notificacion.TipoNotificacion.ALERTA
+                          && n.getIdTransferencia() != null
+                          && n.getIdTransferencia() == t.getIdTransferencia()
+                          && !n.isLeida())
+                .findFirst()
+                .orElse(null);
+
+        if (alerta == null) {
+            JOptionPane.showMessageDialog(this,
+                    "No se encontró la alerta asociada a esta transferencia.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String errorEnvio = notifCtrl.enviarCodigoAlerta(alerta, canal);
+        if (errorEnvio != null) {
+            JOptionPane.showMessageDialog(this, errorEnvio, "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Diálogo para ingresar el código
+        JPanel panelCodigo = new JPanel(new GridBagLayout());
+        GridBagConstraints g = new GridBagConstraints();
+        g.fill = GridBagConstraints.HORIZONTAL;
+        g.gridx = 0; g.weightx = 1.0;
+
+        JLabel lblInfo = new JLabel(
+                "<html>Ingrese el código enviado por <b>" + canal.getNombre() + "</b>.<br>"
+                + "<b>Simulación: " + notifCtrl.getCodigoGeneradoSimulacion() + "</b></html>");
+        lblInfo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        g.gridy = 0; g.insets = new Insets(0, 0, 12, 0);
+        panelCodigo.add(lblInfo, g);
+
+        JTextField txtCodigo = new JTextField();
+        txtCodigo.setPreferredSize(new Dimension(200, 42));
+        txtCodigo.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        txtCodigo.setHorizontalAlignment(JTextField.CENTER);
+        // Solo dígitos, máx 6
+        txtCodigo.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override public void keyTyped(java.awt.event.KeyEvent e) {
+                char c = e.getKeyChar();
+                if (!Character.isDigit(c) && c != java.awt.event.KeyEvent.VK_BACK_SPACE)
+                    e.consume();
+                if (txtCodigo.getText().length() >= 6
+                        && c != java.awt.event.KeyEvent.VK_BACK_SPACE)
+                    e.consume();
+            }
+        });
+        g.gridy = 1; g.insets = new Insets(0, 0, 0, 0);
+        panelCodigo.add(txtCodigo, g);
+
+        int resultado = JOptionPane.showConfirmDialog(this, panelCodigo,
+                "Código de confirmación",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (resultado != JOptionPane.OK_OPTION) return;
+
+        String errorConfirm = notifCtrl.confirmarAlerta(txtCodigo.getText(), canal);
+        if (errorConfirm != null) {
+            JOptionPane.showMessageDialog(this, errorConfirm, "Error", JOptionPane.ERROR_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "<html><b>Transferencia confirmada exitosamente.</b><br>"
+                    + "Monto: S/ " + String.format("%,.2f", t.getMonto()) + "<br>"
+                    + "Destino: " + t.getNumeroTarjetaDestinoEnmascarado()
+                    + " (" + t.getEntidadDestino() + ")</html>",
+                    "Transferencia procesada", JOptionPane.INFORMATION_MESSAGE);
+            cargarHistorial();
+        }
+    }
+
     // ============================================================
     // Renderers
     // ============================================================
@@ -351,36 +463,55 @@ public class HistorialTransferenciasView extends JFrame {
         }
     }
 
-    private class ComprobanteRenderer extends DefaultTableCellRenderer {
+    /**
+     * Renderer unificado para la columna Acción:
+     * - "Descargar" → botón verde
+     * - "Confirmar" → botón naranja/dorado
+     * - "-"         → guión gris
+     */
+    private class AccionRenderer extends DefaultTableCellRenderer {
         @Override public Component getTableCellRendererComponent(
                 JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             Color fondo = colorFila(sel, r);
-            String val = v != null ? v.toString() : "-";
+            String val  = v != null ? v.toString() : "-";
+
             if ("-".equals(val)) {
                 JLabel lbl = new JLabel("-");
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 lbl.setForeground(Color.GRAY);
-                lbl.setOpaque(true); lbl.setBackground(fondo);
+                lbl.setOpaque(true);
+                lbl.setBackground(fondo);
                 return lbl;
             }
+
+            boolean esConfirmar = "Confirmar".equals(val);
+            Color colorBtn = esConfirmar ? new Color(0xE67E22) : VERDE_TRANS;
+
             JPanel panel = new JPanel(new GridBagLayout());
-            panel.setOpaque(true); panel.setBackground(fondo);
-            JButton btn = new JButton("Descargar") {
+            panel.setOpaque(true);
+            panel.setBackground(fondo);
+
+            JButton btn = new JButton(val) {
                 @Override protected void paintComponent(Graphics g) {
                     Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-                    g2.setColor(VERDE_TRANS);
-                    g2.fill(new RoundRectangle2D.Float(2,4,getWidth()-4,getHeight()-8,8,8));
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(colorBtn);
+                    g2.fill(new RoundRectangle2D.Float(
+                            2, 4, getWidth()-4, getHeight()-8, 8, 8));
                     g2.setColor(BLANCO);
                     g2.setFont(getFont());
                     FontMetrics fm = g2.getFontMetrics();
-                    g2.drawString(getText(),(getWidth()-fm.stringWidth(getText()))/2,
+                    g2.drawString(getText(),
+                            (getWidth()-fm.stringWidth(getText()))/2,
                             (getHeight()+fm.getAscent()-fm.getDescent())/2);
                     g2.dispose();
                 }
             };
             btn.setFont(new Font("Segoe UI", Font.BOLD, 11));
-            btn.setBorderPainted(false); btn.setContentAreaFilled(false); btn.setFocusPainted(false);
+            btn.setBorderPainted(false);
+            btn.setContentAreaFilled(false);
+            btn.setFocusPainted(false);
             panel.add(btn);
             return panel;
         }

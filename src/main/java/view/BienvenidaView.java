@@ -148,9 +148,18 @@ public class BienvenidaView extends JFrame {
             barra.add(Box.createRigidArea(new Dimension(0, 10)));
         }
 
-        JLabel lblNotificaciones = crearItemMenu("🔔  Notificaciones");
-        barra.add(lblNotificaciones);
-        barra.add(Box.createRigidArea(new Dimension(0, 10)));
+        JLabel lblNotificaciones;
+        if (!usuario.esAdmin()) {
+            JButton btnNotificaciones = crearBotonBarra("🔔  Notificaciones", new Color(0xE67E22));
+            btnNotificaciones.addActionListener(e -> abrirNotificaciones());
+            btnNotificaciones.setAlignmentX(Component.CENTER_ALIGNMENT);
+            barra.add(btnNotificaciones);
+            barra.add(Box.createRigidArea(new Dimension(0, 8)));
+        } else {
+            lblNotificaciones = crearItemMenu("🔔  Notificaciones");
+            barra.add(lblNotificaciones);
+            barra.add(Box.createRigidArea(new Dimension(0, 10)));
+        }
 
         barra.add(Box.createRigidArea(new Dimension(0, 6)));
 
@@ -336,6 +345,14 @@ public class BienvenidaView extends JFrame {
     // --------------------------------------------------------
     private void abrirTransferencias() {
         new TransferenciasView(controller).setVisible(true);
+        this.setVisible(false);
+    }
+
+    // --------------------------------------------------------
+    // Evento: abrir "Notificaciones" (solo CLIENTE)
+    // --------------------------------------------------------
+    private void abrirNotificaciones() {
+        new NotificacionesView(controller).setVisible(true);
         this.setVisible(false);
     }
 
